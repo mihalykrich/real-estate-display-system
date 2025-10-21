@@ -5,6 +5,7 @@ import { PrismaClient } from '@/generated/prisma';
 import FileDrop from '@/components/FileDrop';
 import { deleteImageAction, swapImagesAction, generateQrAction } from './actions';
 import { Toast } from '@/components/Toast';
+import { ColorInput } from '@/components/ColorInput';
 
 async function updateDisplay(id: number, formData: FormData) {
   'use server';
@@ -304,18 +305,13 @@ export default async function AdminDisplayPage({
                 <label className="block">
                   <div className="text-sm font-medium text-gray-700 mb-2">Sidebar Color</div>
                   <div className="flex items-center gap-3">
-                    <input 
+                    <ColorInput 
                       name="sidebarColor" 
-                      type="color"
                       defaultValue={display.sidebarColor ?? '#7C3AED'} 
-                      className="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer" 
                     />
-                    <input 
-                      type="text"
-                      defaultValue={display.sidebarColor ?? '#7C3AED'} 
-                      placeholder="#7C3AED"
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    />
+                    <span className="text-sm text-gray-600">
+                      {display.sidebarColor ?? '#7C3AED'}
+                    </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Choose a color for the left sidebar background</p>
                 </label>
