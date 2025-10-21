@@ -358,7 +358,7 @@ export default async function AdminDisplayPage({ params }: { params: Promise<{ i
 
             {/* Save Button */}
             <div className="flex justify-center">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200">
+              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200">
                 Save Property Listing
               </button>
             </div>
