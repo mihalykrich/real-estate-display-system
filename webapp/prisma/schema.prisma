@@ -23,6 +23,8 @@ model User {
   image         String?
   // Optional for credentials auth
   passwordHash  String?
+  // User role for admin management
+  role          String    @default("user") // "user" or "admin"
 
   accounts      Account[]
   sessions      Session[]
@@ -92,6 +94,11 @@ model Display {
   
   // Display Styling
   sidebarColor   String?   @default("#7C3AED") // Default purple
+  
+  // Image Carousel Configuration
+  carouselEnabled Boolean? @default(false)     // Enable/disable carousel
+  carouselDuration Int?    @default(5000)      // Time per image in milliseconds
+  carouselTransition String? @default("fade")  // Transition type: "none" or "fade"
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

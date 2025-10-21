@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PropertyImage } from "@/components/PropertyImage";
+import { ImageCarousel } from "@/components/ImageCarousel";
 
 // Helper function to adjust color brightness
 function adjustColor(color: string, amount: number): string {
@@ -156,15 +157,17 @@ export default async function DisplayPage({ params }: { params: Promise<{ id: st
             <div className="lg:col-span-2 bg-gray-50 p-4 lg:p-6">
               <div className="space-y-4 h-full">
                 
-                {/* Main Property Image */}
-                <div className="aspect-[4/3] relative bg-gray-200 rounded-lg overflow-hidden">
-                  <PropertyImage 
-                    src={display.mainImage ? `uploads/${id}/${display.mainImage}` : ''}
-                    alt={`${display.address || 'Property'} - Main view`}
-                    fallbackText="Main Property Image"
-                    fill={true}
-                  />
-                </div>
+                {/* Main Property Image with Carousel */}
+                <ImageCarousel
+                  mainImage={display.mainImage}
+                  image1={display.image1}
+                  image2={display.image2}
+                  image3={display.image3}
+                  displayId={id}
+                  enabled={display.carouselEnabled ?? false}
+                  duration={display.carouselDuration ?? 5000}
+                  transition={display.carouselTransition as 'none' | 'fade' ?? 'fade'}
+                />
 
                 {/* Three Interior Images in a Row */}
                 <div className="grid grid-cols-3 gap-3">

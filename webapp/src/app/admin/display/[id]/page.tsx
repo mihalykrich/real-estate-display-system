@@ -33,6 +33,12 @@ async function updateDisplay(id: number, formData: FormData) {
   
   // Display Styling
   const sidebarColor = (formData.get('sidebarColor') as string)?.trim() || '#7C3AED';
+  
+  // Carousel Configuration
+  const carouselEnabled = formData.get('carouselEnabled') === 'on';
+  const carouselDurationSeconds = formData.get('carouselDuration') ? parseInt(formData.get('carouselDuration') as string) : 5;
+  const carouselDuration = carouselDurationSeconds * 1000; // Convert seconds to milliseconds
+  const carouselTransition = (formData.get('carouselTransition') as string)?.trim() || 'fade';
 
   // Images
   const mainImage = (formData.get('mainImage') as unknown as File) || null;
@@ -46,7 +52,8 @@ async function updateDisplay(id: number, formData: FormData) {
     bedrooms, bathrooms, garage, propertyType,
     description, features,
     contactNumber, email,
-    sidebarColor
+    sidebarColor,
+    carouselEnabled, carouselDuration, carouselTransition
   };
   
   const savedMain = await saveUploadedFile(dir, 'main', mainImage);
@@ -60,6 +67,7 @@ async function updateDisplay(id: number, formData: FormData) {
   if (saved3) updates.image3 = saved3;
 
   console.log('Updating display with data:', updates);
+  console.log('Carousel settings:', { carouselEnabled, carouselDurationSeconds, carouselDuration, carouselTransition });
   await db.display.update({ where: { id }, data: updates });
   
   // Revalidate the display page to show updated data
@@ -338,6 +346,54 @@ export default async function AdminDisplayPage({
                       style={{ backgroundColor: display.sidebarColor ?? '#7C3AED' }}
                     ></div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Image Carousel Configuration */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Image Carousel Settings</h2>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input 
+                    type="checkbox" 
+                    name="carouselEnabled" 
+                    id="carouselEnabled"
+                    defaultChecked={display.carouselEnabled ?? false}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="carouselEnabled" className="text-sm font-medium text-gray-700">
+                    Enable Image Carousel
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 ml-7">When enabled, interior images will rotate as the main image</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label className="block">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Duration per Image (seconds)</div>
+                    <input 
+                      name="carouselDuration" 
+                      type="number" 
+                      min="1" 
+                      max="30"
+                      defaultValue={display.carouselDuration ? Math.round(display.carouselDuration / 1000) : 5} 
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
+                    <p className="text-xs text-gray-500 mt-1">How long each image is displayed (1-30 seconds)</p>
+                  </label>
+                  
+                  <label className="block">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Transition Effect</div>
+                    <select 
+                      name="carouselTransition" 
+                      defaultValue={display.carouselTransition ?? 'fade'} 
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="none">No Transition</option>
+                      <option value="fade">Fade</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">How images transition between each other</p>
+                  </label>
                 </div>
               </div>
             </div>

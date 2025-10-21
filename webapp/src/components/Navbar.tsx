@@ -1,9 +1,21 @@
 "use client";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      // Fetch user role
+      fetch('/api/user/role')
+        .then(res => res.json())
+        .then(data => setUserRole(data.role))
+        .catch(() => setUserRole(null));
+    }
+  }, [session]);
   return (
     <nav className="w-full bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,10 +45,21 @@ export default function Navbar() {
                   href="/admin" 
                   className="text-gray-600 hover:text-blue-600 font-medium transition-colors duration-200"
                 >
-                  Admin Dashboard
+                  Displays
                 </Link>
+                {userRole === 'admin' && (
+                  <Link 
+                    href="/admin/dashboard" 
+                    className="text-gray-600 hover:text-red-600 font-medium transition-colors duration-200"
+                  >
+                    Admin Panel
+                  </Link>
+                )}
                 <span className="text-sm text-gray-500">
                   Welcome, {session?.user?.name || session?.user?.email}
+                  {userRole === 'admin' && (
+                    <span className="ml-1 text-xs bg-red-100 text-red-800 px-1 rounded">ADMIN</span>
+                  )}
                 </span>
                 <button 
                   onClick={() => signOut({ callbackUrl: '/' })}
