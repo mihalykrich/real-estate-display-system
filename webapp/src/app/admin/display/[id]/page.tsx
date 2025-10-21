@@ -85,6 +85,17 @@ export default async function AdminDisplayPage({
   const display = await prisma.display.findUnique({ where: { id } });
   if (!display) return <div className="p-6">Display not found</div>;
 
+  // Debug: Log the display data being loaded
+  console.log('Admin page - Display data for ID', id, ':', {
+    address: display.address,
+    location: display.location,
+    price: display.price,
+    bedrooms: display.bedrooms,
+    bathrooms: display.bathrooms,
+    description: display.description,
+    sidebarColor: display.sidebarColor
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {saved && <Toast message="Property details saved successfully!" type="success" />}
@@ -106,7 +117,9 @@ export default async function AdminDisplayPage({
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Property Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <label className="block">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Address</div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Address {display.address && <span className="text-green-600 text-xs">(✓ Saved)</span>}
+                  </div>
                   <input 
                     name="address" 
                     defaultValue={display.address ?? ''} 
@@ -115,7 +128,9 @@ export default async function AdminDisplayPage({
                   />
                 </label>
                 <label className="block">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Location</div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Location {display.location && <span className="text-green-600 text-xs">(✓ Saved)</span>}
+                  </div>
                   <input 
                     name="location" 
                     defaultValue={display.location ?? ''} 
@@ -124,7 +139,9 @@ export default async function AdminDisplayPage({
                   />
                 </label>
                 <label className="block">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Price</div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Price {display.price && <span className="text-green-600 text-xs">(✓ Saved)</span>}
+                  </div>
                   <input 
                     name="price" 
                     defaultValue={display.price ?? ''} 
