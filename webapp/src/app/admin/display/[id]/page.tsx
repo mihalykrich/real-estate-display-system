@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { saveUploadedFile } from '@/lib/files';
-import { PrismaClient } from '@/generated/prisma';
 import FileDrop from '@/components/FileDrop';
 import { deleteImageAction, swapImagesAction, generateQrAction } from './actions';
 import { Toast } from '@/components/Toast';
@@ -9,8 +8,8 @@ import { ColorInput } from '@/components/ColorInput';
 
 async function updateDisplay(id: number, formData: FormData) {
   'use server';
-  const explicitUrl = process.env.DATABASE_URL || 'postgresql://realestate:realestate@localhost:5432/realestate?schema=public';
-  const db = new PrismaClient({ datasources: { db: { url: explicitUrl } } });
+  // Use the same Prisma client instance as the rest of the app
+  const db = prisma;
 
   // Property Details
   const address = (formData.get('address') as string)?.trim() || null;
@@ -62,7 +61,6 @@ async function updateDisplay(id: number, formData: FormData) {
 
   console.log('Updating display with data:', updates);
   await db.display.update({ where: { id }, data: updates });
-  await db.$disconnect();
   
   // Revalidate the display page to show updated data
   const { revalidatePath } = await import('next/cache');
