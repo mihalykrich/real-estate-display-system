@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { ProfileSettingsForm } from './components/ProfileSettingsForm';
 
 export default async function ProfileSettingsPage() {
   const session = await getServerSession(authOptions);
@@ -49,28 +50,8 @@ export default async function ProfileSettingsPage() {
           </div>
         </div>
 
-        {/* Simple Profile Info */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Information</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <p className="text-gray-900">{user.name || 'Not set'}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <p className="text-gray-900">{user.email}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-              <p className="text-gray-900">{user.companyName || 'Not set'}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <p className="text-gray-900">{user.role}</p>
-            </div>
-          </div>
-        </div>
+        {/* Profile Settings Form */}
+        <ProfileSettingsForm user={user} />
       </div>
     </div>
   );
