@@ -25,6 +25,15 @@ model User {
   passwordHash  String?
   // User role for admin management
   role          String    @default("user") // "user" or "admin"
+  
+  // Profile Settings
+  companyName   String?   // Company/Organization name
+  companyLogo   String?   // Path to uploaded logo file
+  phoneNumber   String?   // Contact phone number
+  bio           String?   @db.Text // User bio/description
+  website       String?   // Personal/company website
+  timezone      String?   @default("Europe/London") // User timezone
+  language      String?   @default("en") // Preferred language
 
   accounts      Account[]
   sessions      Session[]

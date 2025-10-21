@@ -5,18 +5,25 @@ interface ToastProps {
   message: string;
   type?: "success" | "error" | "info";
   duration?: number;
+  onClose?: () => void;
 }
 
-export function Toast({ message, type = "success", duration = 3000 }: ToastProps) {
+export function Toast({ message, type = "success", duration = 3000, onClose }: ToastProps) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(false);
+      onClose?.();
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, onClose]);
+
+  const handleClose = () => {
+    setVisible(false);
+    onClose?.();
+  };
 
   if (!visible) return null;
 
@@ -54,7 +61,7 @@ export function Toast({ message, type = "success", duration = 3000 }: ToastProps
           <p className="text-sm font-medium">{message}</p>
         </div>
         <button
-          onClick={() => setVisible(false)}
+          onClick={handleClose}
           className="flex-shrink-0 ml-4 text-white hover:text-gray-200 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

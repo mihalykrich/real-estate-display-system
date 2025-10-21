@@ -1,6 +1,17 @@
 "use client";
 import { useState } from 'react';
-import { promoteUserAction, demoteUserAction, deleteUserAction } from '@/app/admin/dashboard/actions';
+import { promoteUserAction, demoteUserAction, deleteUserAction, getUserLoginDetailsAction } from '@/app/admin/dashboard/actions';
+import { CreateUserModal } from './CreateUserModal';
+import { Toast } from './Toast';
+import { ConfirmationModal } from './ConfirmationModal';
+
+// Utility function to format dates consistently in UK format (DD/MM/YYYY)
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${day}/${month}/${year}`;
+}
 
 interface User {
   id: string;
@@ -20,60 +31,177 @@ interface UserManagementProps {
 export function UserManagement({ users }: UserManagementProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  } | null>(null);
 
   const handlePromote = async (userId: string) => {
-    if (window.confirm('Are you sure you want to promote this user to admin?')) {
-      setIsLoading(true);
-      setCurrentUserId(userId);
-      try {
-        await promoteUserAction(userId);
-        alert('User promoted successfully!');
-        window.location.reload();
-      } catch (error) {
-        alert('Failed to promote user: ' + (error as Error).message);
-      } finally {
-        setIsLoading(false);
-        setCurrentUserId(null);
+    const user = users.find(u => u.id === userId);
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Promote User to Admin',
+      message: `Are you sure you want to promote ${user?.name || user?.email} to admin? They will gain full administrative access to the system.`,
+      type: 'warning',
+      onConfirm: async () => {
+        setIsLoading(true);
+        setCurrentUserId(userId);
+        try {
+          await promoteUserAction(userId);
+          setToast({ message: 'User promoted successfully!', type: 'success' });
+          window.location.reload();
+        } catch (error) {
+          setToast({ message: 'Failed to promote user: ' + (error as Error).message, type: 'error' });
+        } finally {
+          setIsLoading(false);
+          setCurrentUserId(null);
+        }
       }
-    }
+    });
   };
 
   const handleDemote = async (userId: string) => {
-    if (window.confirm('Are you sure you want to demote this admin to a regular user?')) {
-      setIsLoading(true);
-      setCurrentUserId(userId);
-      try {
-        await demoteUserAction(userId);
-        alert('User demoted successfully!');
-        window.location.reload();
-      } catch (error) {
-        alert('Failed to demote user: ' + (error as Error).message);
-      } finally {
-        setIsLoading(false);
-        setCurrentUserId(null);
+    const user = users.find(u => u.id === userId);
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Demote Admin to User',
+      message: `Are you sure you want to demote ${user?.name || user?.email} from admin to regular user? They will lose administrative privileges.`,
+      type: 'warning',
+      onConfirm: async () => {
+        setIsLoading(true);
+        setCurrentUserId(userId);
+        try {
+          await demoteUserAction(userId);
+          setToast({ message: 'User demoted successfully!', type: 'success' });
+          window.location.reload();
+        } catch (error) {
+          setToast({ message: 'Failed to demote user: ' + (error as Error).message, type: 'error' });
+        } finally {
+          setIsLoading(false);
+          setCurrentUserId(null);
+        }
       }
-    }
+    });
   };
 
   const handleDelete = async (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      setIsLoading(true);
-      setCurrentUserId(userId);
-      try {
-        await deleteUserAction(userId);
-        alert('User deleted successfully!');
-        window.location.reload();
-      } catch (error) {
-        alert('Failed to delete user: ' + (error as Error).message);
-      } finally {
-        setIsLoading(false);
-        setCurrentUserId(null);
+    const user = users.find(u => u.id === userId);
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Delete User',
+      message: `Are you sure you want to delete ${user?.name || user?.email}? This action cannot be undone and will permanently remove all user data.`,
+      type: 'danger',
+      onConfirm: async () => {
+        setIsLoading(true);
+        setCurrentUserId(userId);
+        try {
+          await deleteUserAction(userId);
+          setToast({ message: 'User deleted successfully!', type: 'success' });
+          window.location.reload();
+        } catch (error) {
+          setToast({ message: 'Failed to delete user: ' + (error as Error).message, type: 'error' });
+        } finally {
+          setIsLoading(false);
+          setCurrentUserId(null);
+        }
       }
+    });
+  };
+
+  const handleExportLoginDetails = async (userId: string) => {
+    try {
+      const userDetails = await getUserLoginDetailsAction(userId);
+      
+      // Create login details text
+      const loginDetails = `Real Estate Display System - User Login Details
+===============================================
+
+User Information:
+- Name: ${userDetails.name || 'N/A'}
+- Email: ${userDetails.email}
+- Role: ${userDetails.role}
+- Account Created: ${formatDate(new Date(userDetails.createdAt))}
+
+Login Instructions:
+1. Go to: http://localhost:3000/login
+2. Enter your email address: ${userDetails.email}
+3. Enter your password (provided separately for security)
+
+Important Notes:
+- Keep this information secure
+- The user should change their password on first login
+- Contact an administrator if you need assistance
+
+Generated on: ${formatDate(new Date())}
+Generated by: Admin Panel`;
+
+      // Create and download file
+      const blob = new Blob([loginDetails], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `login-details-${userDetails.email?.replace('@', '-at-')}-${formatDate(new Date()).replace(/\//g, '-')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setToast({ message: 'Login details exported successfully!', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Failed to export login details: ' + (error as Error).message, type: 'error' });
     }
   };
 
   return (
     <div className="space-y-4">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          duration={4000}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmationModal && (
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(null)}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          type={confirmationModal.type}
+          isLoading={isLoading && currentUserId !== null}
+        />
+      )}
+
+      {/* Create User Button */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-gray-800">Users ({users.length})</h3>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Create User</span>
+        </button>
+      </div>
+
+      {/* Create User Modal */}
+      <CreateUserModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
+
       {isLoading && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center">
@@ -125,7 +253,7 @@ export function UserManagement({ users }: UserManagementProps) {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {formatDate(new Date(user.createdAt))}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {user._count.sessions}
@@ -148,6 +276,13 @@ export function UserManagement({ users }: UserManagementProps) {
                       Demote
                     </button>
                   )}
+                  <button
+                    onClick={() => handleExportLoginDetails(user.id)}
+                    className="text-green-600 hover:text-green-900"
+                    title="Export login details"
+                  >
+                    Export
+                  </button>
                   <button
                     onClick={() => handleDelete(user.id)}
                     disabled={isLoading && currentUserId === user.id}
