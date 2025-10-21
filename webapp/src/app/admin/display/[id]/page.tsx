@@ -4,6 +4,7 @@ import { saveUploadedFile } from '@/lib/files';
 import { PrismaClient } from '@/generated/prisma';
 import FileDrop from '@/components/FileDrop';
 import { deleteImageAction, swapImagesAction, generateQrAction } from './actions';
+import { Toast } from '@/components/Toast';
 
 async function updateDisplay(id: number, formData: FormData) {
   'use server';
@@ -67,17 +68,25 @@ async function updateDisplay(id: number, formData: FormData) {
   revalidatePath(`/display/${id}`);
   revalidatePath(`/admin/display/${id}`);
   
-  redirect(`/display/${id}`);
+  redirect(`/admin/display/${id}?saved=true`);
 }
 
-export default async function AdminDisplayPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminDisplayPage({ 
+  params, 
+  searchParams 
+}: { 
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { id: idStr } = await params;
+  const { saved } = await searchParams;
   const id = Number(idStr);
   const display = await prisma.display.findUnique({ where: { id } });
   if (!display) return <div className="p-6">Display not found</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {saved && <Toast message="Property details saved successfully!" type="success" />}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">

@@ -24,6 +24,16 @@ export default async function DisplayPage({ params }: { params: Promise<{ id: st
   const display = await prisma.display.findUnique({ where: { id } });
   if (!display) return <div className="p-6">Display not found</div>;
 
+  // Debug: Log the display data
+  console.log('Display data for ID', id, ':', {
+    address: display.address,
+    location: display.location,
+    price: display.price,
+    bedrooms: display.bedrooms,
+    bathrooms: display.bathrooms,
+    sidebarColor: display.sidebarColor
+  });
+
   // Parse features from text (one per line)
   const features = display.features ? display.features.split('\n').filter(f => f.trim()) : [];
 
