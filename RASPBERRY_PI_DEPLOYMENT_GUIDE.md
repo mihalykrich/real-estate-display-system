@@ -243,7 +243,7 @@ npm run build
 
 ### 7.2 Set Up PM2 Process Manager
 ```bash
-# Create PM2 ecosystem file
+# Create PM2 ecosystem file with explicit database URL
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
@@ -257,7 +257,8 @@ module.exports = {
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
-      PORT: 3000
+      PORT: 3000,
+      DATABASE_URL: 'postgresql://realestate:realestate@localhost:5432/realestate?schema=public'
     }
   }]
 };
@@ -272,6 +273,27 @@ pm2 save
 # Set up PM2 to start on boot
 pm2 startup
 # Follow the instructions provided by the command above
+```
+
+### 7.3 Create Reliable Startup Script
+```bash
+# Create a startup script for manual server restart
+cat > /home/pi/start-server.sh << 'EOF'
+#!/bin/bash
+echo "Starting Real Estate Display Server..."
+cd /home/pi/real-estate-display-system/webapp
+
+# Ensure correct environment
+export DATABASE_URL="postgresql://realestate:realestate@localhost:5432/realestate?schema=public"
+export NODE_ENV="production"
+
+# Start with PM2
+pm2 start ecosystem.config.js
+echo "Server started successfully!"
+echo "Access at: http://$(hostname -I | awk '{print $1}'):3000"
+EOF
+
+chmod +x /home/pi/start-server.sh
 ```
 
 ---
