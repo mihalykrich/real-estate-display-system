@@ -1,6 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { exportDataAction, importDataAction } from '@/app/admin/dashboard/data-actions';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { useToast } from '@/contexts/ToastContext';
 
 interface DataManagementProps {
   totalDisplays: number;
@@ -10,6 +12,8 @@ interface DataManagementProps {
 export function DataManagement({ totalDisplays, activeDisplays }: DataManagementProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const { showToast } = useToast();
 
   const handleExport = async () => {
     setIsLoading(true);
@@ -24,10 +28,10 @@ export function DataManagement({ totalDisplays, activeDisplays }: DataManagement
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      alert('Data exported successfully!');
+      showToast('Data exported successfully!', 'success');
     } catch (error) {
       console.error('Error exporting data:', error);
-      alert('Failed to export data: ' + (error as Error).message);
+      showToast('Failed to export data: ' + (error as Error).message, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -41,36 +45,38 @@ export function DataManagement({ totalDisplays, activeDisplays }: DataManagement
     }
   };
 
-  const handleImport = async () => {
+  const handleImportClick = () => {
     if (!importFile) {
-      alert('Please select a JSON file to import.');
+      showToast('Please select a JSON file to import.', 'error');
       return;
     }
-    
-    if (!window.confirm('WARNING: Importing data will OVERWRITE all existing display data. Are you absolutely sure you want to proceed?')) {
-      return;
-    }
+    setShowImportModal(true);
+  };
+
+  const handleImportConfirm = async () => {
+    if (!importFile) return;
 
     setIsLoading(true);
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        try {
-          const json = JSON.parse(e.target?.result as string);
-          await importDataAction(json);
-          alert('Data imported successfully! Refreshing page...');
-          window.location.reload();
-        } catch (parseError) {
-          console.error('Error parsing JSON:', parseError);
-          alert('Invalid JSON file. Please ensure it is a valid JSON format.');
-        }
+               try {
+                 const json = JSON.parse(e.target?.result as string);
+                 await importDataAction(json);
+                 showToast('Data imported successfully! Refreshing page...', 'success');
+                 setTimeout(() => window.location.reload(), 1500);
+               } catch (parseError) {
+                 console.error('Error parsing JSON:', parseError);
+                 showToast('Invalid JSON file. Please ensure it is a valid JSON format.', 'error');
+               }
       };
       reader.readAsText(importFile);
     } catch (error) {
       console.error('Error importing data:', error);
-      alert('Failed to import data: ' + (error as Error).message);
+      showToast('Failed to import data: ' + (error as Error).message, 'error');
     } finally {
       setIsLoading(false);
+      setShowImportModal(false);
     }
   };
 
@@ -119,7 +125,7 @@ export function DataManagement({ totalDisplays, activeDisplays }: DataManagement
           disabled={isLoading}
         />
         <button
-          onClick={handleImport}
+          onClick={handleImportClick}
           disabled={isLoading || !importFile}
           className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -141,6 +147,19 @@ export function DataManagement({ totalDisplays, activeDisplays }: DataManagement
           </div>
         </div>
       </div>
+
+      {/* Import Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onConfirm={handleImportConfirm}
+        title="Import Display Data"
+        message={`WARNING: Importing data will OVERWRITE all existing display data. Are you absolutely sure you want to proceed with importing "${importFile?.name}"?`}
+        confirmText="Import Data"
+        cancelText="Cancel"
+        type="warning"
+        isLoading={isLoading}
+      />
     </div>
   );
 }

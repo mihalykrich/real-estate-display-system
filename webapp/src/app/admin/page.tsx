@@ -1,6 +1,23 @@
 import Link from "next/link";
+import { prisma } from '@/lib/prisma';
 
 export default async function AdminPage() {
+  // Get actual display statistics
+  const totalDisplays = await prisma.display.count();
+  const activeDisplays = await prisma.display.count({
+    where: {
+      OR: [
+        { address: { not: null } },
+        { location: { not: null } },
+        { price: { not: null } },
+        { mainImage: { not: null } },
+        { image1: { not: null } },
+        { image2: { not: null } },
+        { image3: { not: null } }
+      ]
+    }
+  });
+  
   // Placeholder grid of 12 display links
   const items = Array.from({ length: 12 }, (_, i) => i + 1);
   return (
@@ -32,7 +49,7 @@ export default async function AdminPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Displays</p>
-                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-2xl font-bold text-gray-900">{totalDisplays}</p>
               </div>
             </div>
           </div>
@@ -46,7 +63,7 @@ export default async function AdminPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Displays</p>
-                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-2xl font-bold text-gray-900">{activeDisplays}</p>
               </div>
             </div>
           </div>

@@ -10,19 +10,26 @@ interface ToastProps {
 
 export function Toast({ message, type = "success", duration = 3000, onClose }: ToastProps) {
   const [visible, setVisible] = useState(true);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setVisible(false);
-      onClose?.();
+      setIsExiting(true);
+      setTimeout(() => {
+        setVisible(false);
+        onClose?.();
+      }, 300); // Match the exit animation duration
     }, duration);
 
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
   const handleClose = () => {
-    setVisible(false);
-    onClose?.();
+    setIsExiting(true);
+    setTimeout(() => {
+      setVisible(false);
+      onClose?.();
+    }, 300);
   };
 
   if (!visible) return null;
@@ -52,8 +59,10 @@ export function Toast({ message, type = "success", duration = 3000, onClose }: T
   }[type];
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right-5 duration-300">
-      <div className={`${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm`}>
+    <div className={`transform transition-all duration-300 ease-in-out ${
+      isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+    }`}>
+      <div className={`${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-sm min-w-[300px]`}>
         <div className="flex-shrink-0">
           {icon}
         </div>

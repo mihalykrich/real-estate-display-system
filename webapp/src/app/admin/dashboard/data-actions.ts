@@ -41,13 +41,35 @@ export async function importDataAction(data: any) {
     throw new Error('Invalid data format');
   }
   
-  // Clear existing displays
-  await prisma.display.deleteMany({});
-  
-  // Import new displays
+  // Use upsert to preserve IDs and update existing records
   for (const display of data.displays) {
-    await prisma.display.create({
-      data: {
+    await prisma.display.upsert({
+      where: { id: display.id },
+      update: {
+        address: display.address,
+        location: display.location,
+        price: display.price,
+        priceType: display.priceType,
+        bedrooms: display.bedrooms,
+        bathrooms: display.bathrooms,
+        garage: display.garage,
+        propertyType: display.propertyType,
+        description: display.description,
+        features: display.features,
+        mainImage: display.mainImage,
+        image1: display.image1,
+        image2: display.image2,
+        image3: display.image3,
+        qrCodePath: display.qrCodePath,
+        contactNumber: display.contactNumber,
+        email: display.email,
+        sidebarColor: display.sidebarColor,
+        carouselEnabled: display.carouselEnabled,
+        carouselDuration: display.carouselDuration,
+        carouselTransition: display.carouselTransition,
+      },
+      create: {
+        id: display.id,
         address: display.address,
         location: display.location,
         price: display.price,

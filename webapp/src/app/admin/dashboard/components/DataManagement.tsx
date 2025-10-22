@@ -1,6 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { exportDataAction, importDataAction } from '../data-actions';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { useToast } from '@/contexts/ToastContext';
 
 interface DataManagementProps {
   totalDisplays: number;
@@ -9,41 +11,53 @@ interface DataManagementProps {
 
 export function DataManagement({ totalDisplays, activeDisplays }: DataManagementProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { showToast } = useToast();
 
   const handleExportData = async () => {
     setLoading('export');
     try {
       await exportDataAction();
+      showToast('Data exported successfully!', 'success');
     } catch (error) {
       console.error('Failed to export data:', error);
-      alert('Failed to export data. Please try again.');
+      showToast('Failed to export data. Please try again.', 'error');
     } finally {
       setLoading(null);
     }
   };
 
-  const handleImportData = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     if (!file.name.endsWith('.json')) {
-      alert('Please select a JSON file.');
+      showToast('Please select a JSON file.', 'error');
       return;
     }
 
+    setSelectedFile(file);
+    setShowImportModal(true);
+  };
+
+  const handleImportConfirm = async () => {
+    if (!selectedFile) return;
+
     setLoading('import');
     try {
-      const text = await file.text();
+      const text = await selectedFile.text();
       const data = JSON.parse(text);
       await importDataAction(data);
-      alert('Data imported successfully!');
+      showToast('Data imported successfully!', 'success');
+      setSelectedFile(null);
     } catch (error) {
       console.error('Failed to import data:', error);
-      alert('Failed to import data. Please check the file format.');
+      showToast('Failed to import data. Please check the file format.', 'error');
     } finally {
       setLoading(null);
-      // Reset the input
-      event.target.value = '';
+      setShowImportModal(false);
     }
   };
 
@@ -89,7 +103,7 @@ export function DataManagement({ totalDisplays, activeDisplays }: DataManagement
           <input
             type="file"
             accept=".json"
-            onChange={handleImportData}
+            onChange={handleFileSelect}
             disabled={loading === 'import'}
             className="hidden"
             id="import-file"
@@ -114,12 +128,7 @@ export function DataManagement({ totalDisplays, activeDisplays }: DataManagement
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Database Actions</h3>
         <div className="space-y-3">
           <button
-            onClick={() => {
-              if (confirm('This will delete ALL display data. Are you sure?')) {
-                // This would need to be implemented as a server action
-                alert('Feature coming soon - database reset functionality');
-              }
-            }}
+            onClick={() => setShowResetModal(true)}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm"
           >
             Reset All Displays
@@ -129,6 +138,39 @@ export function DataManagement({ totalDisplays, activeDisplays }: DataManagement
           </p>
         </div>
       </div>
+
+      {/* Import Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showImportModal}
+        onClose={() => {
+          setShowImportModal(false);
+          setSelectedFile(null);
+        }}
+        onConfirm={handleImportConfirm}
+        title="Import Display Data"
+        message={`WARNING: Importing data will OVERWRITE all existing display data. Are you absolutely sure you want to proceed with importing "${selectedFile?.name}"?`}
+        confirmText="Import Data"
+        cancelText="Cancel"
+        type="warning"
+        isLoading={loading === 'import'}
+      />
+
+      {/* Reset Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={() => {
+          // This would need to be implemented as a server action
+          alert('Feature coming soon - database reset functionality');
+          setShowResetModal(false);
+        }}
+        title="Reset All Displays"
+        message="This will permanently delete ALL display data and cannot be undone. Are you absolutely sure you want to proceed?"
+        confirmText="Reset All Data"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={false}
+      />
     </div>
   );
 }

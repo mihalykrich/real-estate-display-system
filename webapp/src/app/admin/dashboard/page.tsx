@@ -46,9 +46,12 @@ export default async function AdminDashboard() {
     }
   });
 
-  const displaysWithImages = await prisma.display.count({
+  const activeDisplays = await prisma.display.count({
     where: {
       OR: [
+        { address: { not: null } },
+        { location: { not: null } },
+        { price: { not: null } },
         { mainImage: { not: null } },
         { image1: { not: null } },
         { image2: { not: null } },
@@ -114,7 +117,7 @@ export default async function AdminDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Active Displays</p>
-                <p className="text-2xl font-semibold text-gray-900">{displaysWithImages}</p>
+                <p className="text-2xl font-semibold text-gray-900">{activeDisplays}</p>
               </div>
             </div>
           </div>
@@ -132,7 +135,7 @@ export default async function AdminDashboard() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Data Management</h2>
             <DataManagement 
               totalDisplays={displayStats._count.id}
-              activeDisplays={displaysWithImages}
+              activeDisplays={activeDisplays}
             />
           </div>
         </div>

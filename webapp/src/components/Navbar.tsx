@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { UserDropdown } from "./UserDropdown";
 import { ChangePasswordModal } from "./ChangePasswordModal";
+import { DisplayDropdown } from "./DisplayDropdown";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -53,13 +54,8 @@ export default function Navbar() {
             </div>
           </Link>
           
-              <div className="flex items-center space-x-6">
-                <Link 
-                  href="/display/1" 
-                  className="text-gray-600 hover:text-blue-600 font-medium transition-colors duration-200"
-                >
-                  View Display
-                </Link>
+                     <div className="flex items-center space-x-6">
+                       <DisplayDropdown />
                 {status === 'authenticated' ? (
                   <div className="flex items-center space-x-4">
                     <Link 
