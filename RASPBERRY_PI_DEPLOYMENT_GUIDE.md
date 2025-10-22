@@ -49,6 +49,12 @@ This comprehensive guide will help you deploy the Real Estate Display System usi
 - **Power Supply** (5V 2.5A for Zero 2W, 5V 3A for Pi 4)
 - **WiFi** (for Zero 2W) or **Ethernet** (for Pi 4)
 
+### Dual Display Setup (Optional)
+- **Raspberry Pi 4 (2GB RAM)** with **dual HDMI ports**
+- **2x HDMI cables** and **2x monitors/TVs**
+- **MicroSD Card** (32GB+ Class 10)
+- **Power Supply** (5V 3A USB-C)
+
 ### Software Requirements
 - **Raspberry Pi OS** (64-bit recommended)
 - **Node.js 18+** (Server only)
@@ -295,6 +301,91 @@ EOF
 
 chmod +x /home/pi/start-server.sh
 ```
+
+---
+
+## 🖥️ DUAL DISPLAY SETUP (Alternative)
+
+If you want to run **two displays on a single Raspberry Pi 4**, you can use the dual HDMI ports for a cost-effective solution.
+
+### Option 1: Separate Browser Windows (Recommended)
+
+```bash
+# Download and run the dual display setup script
+wget https://raw.githubusercontent.com/your-repo/setup-dual-displays.sh
+chmod +x setup-dual-displays.sh
+sudo ./setup-dual-displays.sh
+```
+
+**Configuration:**
+- **Display 1 (Left)**: Shows `/display/1`
+- **Display 2 (Right)**: Shows `/display/2`
+- **Resolution**: 1920x1080 each
+- **Auto-start**: Enabled on boot
+
+### Option 2: Extended Desktop (Single Window)
+
+```bash
+# Download and run the extended display setup script
+wget https://raw.githubusercontent.com/your-repo/setup-extended-display.sh
+chmod +x setup-extended-display.sh
+sudo ./setup-extended-display.sh
+```
+
+**Configuration:**
+- **Total Resolution**: 3840x1080 (2x 1920x1080)
+- **Left Half**: Shows `/display/1`
+- **Right Half**: Shows `/display/2`
+- **Single Browser**: Spans both displays
+
+### Manual Setup Steps
+
+1. **Configure Display Settings:**
+   ```bash
+   sudo nano /boot/config.txt
+   ```
+   Add:
+   ```
+   hdmi_force_hotplug=1
+   hdmi_drive=2
+   hdmi_group=2
+   hdmi_mode=82
+   ```
+
+2. **Install Required Software:**
+   ```bash
+   sudo apt update
+   sudo apt install -y chromium-browser unclutter xdotool
+   ```
+
+3. **Configure Dual Displays:**
+   ```bash
+   xrandr --output HDMI-1 --mode 1920x1080 --pos 0x0
+   xrandr --output HDMI-2 --mode 1920x1080 --pos 1920x0
+   ```
+
+4. **Start Dual Displays:**
+   ```bash
+   # Display 1
+   DISPLAY=:0.0 chromium-browser --kiosk http://SERVER_IP:3000/display/1 &
+   
+   # Display 2
+   DISPLAY=:0.1 chromium-browser --kiosk http://SERVER_IP:3000/display/2 &
+   ```
+
+### Advantages of Dual Display Setup
+
+✅ **Cost Effective**: One Pi for two displays  
+✅ **Easy Management**: Single device to maintain  
+✅ **Power Efficient**: Lower power consumption  
+✅ **Space Saving**: Compact setup  
+✅ **Synchronized**: Both displays update together  
+
+### Considerations
+
+⚠️ **Performance**: Pi 4 2GB may struggle with complex animations  
+⚠️ **Reliability**: Single point of failure  
+⚠️ **Flexibility**: Less flexible than separate Pis  
 
 ---
 
