@@ -1,37 +1,75 @@
 # Raspberry Pi Deployment Guide
-## Real Estate Display System
+## Real Estate Display System - Server & Client Architecture
 
-This comprehensive guide will help you deploy the Real Estate Display System on a Raspberry Pi for production use with A4 LCD displays.
+This comprehensive guide will help you deploy the Real Estate Display System using a **server-client architecture** with one central server Raspberry Pi managing multiple display Raspberry Pi clients.
+
+---
+
+## 🏗️ Architecture Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Server Pi     │    │   Display Pi 1  │    │   Display Pi 2  │
+│   (Pi 4/5 8GB)  │◄───┤   (Pi Zero 2W)  │    │   (Pi Zero 2W)  │
+│                 │    │                 │    │                 │
+│ • Next.js App   │    │ • Chromium      │    │ • Chromium      │
+│ • PostgreSQL    │    │ • Kiosk Mode    │    │ • Kiosk Mode    │
+│ • Admin Panel   │    │ • Auto-refresh  │    │ • Auto-refresh  │
+│ • File Storage  │    │ • Display 1     │    │ • Display 2     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   Display Pi N  │
+                    │   (Pi Zero 2W)  │
+                    │                 │
+                    │ • Chromium      │
+                    │ • Kiosk Mode    │
+                    │ • Auto-refresh  │
+                    │ • Display N     │
+                    └─────────────────┘
+```
 
 ---
 
 ## 📋 Prerequisites
 
-### Hardware Requirements
-- **Raspberry Pi 4** (4GB RAM minimum, 8GB recommended)
-- **MicroSD Card** (32GB+ Class 10)
-- **A4 LCD Display** (compatible with Raspberry Pi)
+### Server Raspberry Pi Requirements
+- **Raspberry Pi 4 (8GB RAM)** or **Raspberry Pi 5 (8GB RAM)**
+- **MicroSD Card** (64GB+ Class 10)
 - **Power Supply** (5V 3A USB-C)
-- **Ethernet Cable** or **WiFi** for internet connection
+- **Ethernet Cable** (wired connection recommended)
 - **Keyboard & Mouse** (for initial setup)
+
+### Display Raspberry Pi Requirements
+- **Raspberry Pi Zero 2 W** (recommended) or **Raspberry Pi 4 (2GB RAM)**
+- **MicroSD Card** (16GB Class 10)
+- **A4 LCD Display** (compatible with Raspberry Pi)
+- **Power Supply** (5V 2.5A for Zero 2W, 5V 3A for Pi 4)
+- **WiFi** (for Zero 2W) or **Ethernet** (for Pi 4)
 
 ### Software Requirements
 - **Raspberry Pi OS** (64-bit recommended)
-- **Node.js 18+**
-- **Docker & Docker Compose**
-- **Git**
+- **Node.js 18+** (Server only)
+- **Docker & Docker Compose** (Server only)
+- **Git** (Server only)
 
 ---
 
-## 🚀 Step 1: Raspberry Pi Setup
+## 🖥️ PART A: SERVER RASPBERRY PI SETUP
 
-### 1.1 Install Raspberry Pi OS
+---
+
+## 🚀 Step 1: Server Pi Initial Setup
+
+### 1.1 Install Raspberry Pi OS (Server)
 1. Download **Raspberry Pi Imager** from [rpi.org](https://www.raspberrypi.org/downloads/)
-2. Flash **Raspberry Pi OS (64-bit)** to your microSD card
-3. Enable **SSH** and set up **WiFi** during imaging
-4. Insert SD card and boot your Raspberry Pi
+2. Flash **Raspberry Pi OS (64-bit)** to your **64GB+ microSD card**
+3. Enable **SSH** and set up **WiFi/Ethernet** during imaging
+4. Insert SD card and boot your **Server Raspberry Pi**
 
-### 1.2 Initial System Setup
+### 1.2 Server System Setup
 ```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -42,22 +80,21 @@ sudo apt install -y git curl wget vim htop
 # Set up SSH (if not done during imaging)
 sudo systemctl enable ssh
 sudo systemctl start ssh
-```
 
-### 1.3 Configure Display Settings
-```bash
-# Enable display auto-start
-sudo raspi-config
-# Navigate to: Advanced Options > Resolution
-# Select: 1920x1080 (or your display's native resolution)
-# Reboot when prompted
+# Set static IP (recommended for server)
+sudo nano /etc/dhcpcd.conf
+# Add:
+# interface eth0
+# static ip_address=192.168.1.100/24
+# static routers=192.168.1.1
+# static domain_name_servers=8.8.8.8 8.8.4.4
 ```
 
 ---
 
-## 🐳 Step 2: Install Docker & Docker Compose
+## 🐳 Step 2: Install Docker & Docker Compose (Server Only)
 
-### 2.1 Install Docker
+### 2.1 Install Docker on Server Pi
 ```bash
 # Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -74,7 +111,7 @@ sudo systemctl start docker
 docker --version
 ```
 
-### 2.2 Install Docker Compose
+### 2.2 Install Docker Compose on Server Pi
 ```bash
 # Install Docker Compose
 sudo apt install -y docker-compose
@@ -85,9 +122,9 @@ docker-compose --version
 
 ---
 
-## 📦 Step 3: Install Node.js
+## 📦 Step 3: Install Node.js (Server Only)
 
-### 3.1 Install Node.js 18+
+### 3.1 Install Node.js 18+ on Server Pi
 ```bash
 # Install Node.js using NodeSource repository
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -100,9 +137,29 @@ npm --version
 
 ---
 
-## 📥 Step 4: Deploy the Application
+## 🌐 Step 4: Network Configuration (Server)
 
-### 4.1 Clone the Repository
+### 4.1 Configure Server Network Access
+```bash
+# Configure firewall to allow client connections
+sudo apt install -y ufw
+
+# Allow SSH and HTTP
+sudo ufw allow ssh
+sudo ufw allow 3000/tcp
+
+# Enable firewall
+sudo ufw enable
+
+# Note your server IP address
+hostname -I
+```
+
+---
+
+## 📥 Step 5: Deploy the Application (Server)
+
+### 5.1 Clone the Repository
 ```bash
 # Navigate to home directory
 cd /home/pi
@@ -112,7 +169,7 @@ git clone https://github.com/mihalykrich/real-estate-display-system.git
 cd real-estate-display-system
 ```
 
-### 4.2 Set Up Environment Variables
+### 5.2 Set Up Environment Variables
 ```bash
 # Navigate to webapp directory
 cd webapp
@@ -123,7 +180,7 @@ cat > .env << 'EOF'
 DATABASE_URL="postgresql://realestate:realestate@localhost:5432/realestate?schema=public"
 
 # NextAuth configuration
-NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_URL="http://192.168.1.100:3000"
 NEXTAUTH_SECRET="your-production-secret-key-change-this"
 
 # File upload configuration
@@ -134,7 +191,7 @@ EOF
 echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)" >> .env
 ```
 
-### 4.3 Install Dependencies
+### 5.3 Install Dependencies
 ```bash
 # Install Node.js dependencies
 npm install
@@ -145,9 +202,9 @@ sudo npm install -g pm2
 
 ---
 
-## 🗄️ Step 5: Database Setup
+## 🗄️ Step 6: Database Setup (Server)
 
-### 5.1 Start PostgreSQL Database
+### 6.1 Start PostgreSQL Database
 ```bash
 # Navigate to project root
 cd /home/pi/real-estate-display-system
@@ -159,7 +216,7 @@ docker-compose up -d
 docker ps
 ```
 
-### 5.2 Initialize Database
+### 6.2 Initialize Database
 ```bash
 # Navigate to webapp directory
 cd webapp
@@ -176,21 +233,21 @@ node scripts/create-admin.mjs
 
 ---
 
-## 🚀 Step 6: Production Deployment
+## 🚀 Step 7: Production Deployment (Server)
 
-### 6.1 Build the Application
+### 7.1 Build the Application
 ```bash
 # Build the Next.js application
 npm run build
 ```
 
-### 6.2 Set Up PM2 Process Manager
+### 7.2 Set Up PM2 Process Manager
 ```bash
 # Create PM2 ecosystem file
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
-    name: 'real-estate-display',
+    name: 'real-estate-display-server',
     script: 'npm',
     args: 'start',
     cwd: '/home/pi/real-estate-display-system/webapp',
@@ -219,15 +276,65 @@ pm2 startup
 
 ---
 
-## 🖥️ Step 7: Display Configuration
+## 🖥️ PART B: DISPLAY RASPBERRY PI CLIENT SETUP
 
-### 7.1 Install Chromium Browser
+---
+
+## 🚀 Step 8: Display Pi Initial Setup
+
+### 8.1 Install Raspberry Pi OS (Display Client)
+1. Download **Raspberry Pi Imager** from [rpi.org](https://www.raspberrypi.org/downloads/)
+2. Flash **Raspberry Pi OS Lite (64-bit)** to your **16GB microSD card**
+3. Enable **SSH** and set up **WiFi** during imaging
+4. Insert SD card and boot your **Display Raspberry Pi**
+
+### 8.2 Display Pi System Setup
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install essential packages
+sudo apt install -y curl wget
+
+# Set up SSH
+sudo systemctl enable ssh
+sudo systemctl start ssh
+
+# Configure WiFi (if using Pi Zero 2W)
+sudo raspi-config
+# Navigate to: System Options > Wireless LAN
+# Enter your WiFi credentials
+```
+
+### 8.3 Configure Display Settings
+```bash
+# Enable display auto-start
+sudo raspi-config
+# Navigate to: Advanced Options > Resolution
+# Select: 1920x1080 (or your display's native resolution)
+# Reboot when prompted
+```
+
+## 🖥️ Step 9: Display Client Configuration
+
+### 9.1 Install Chromium Browser
 ```bash
 # Install Chromium
 sudo apt install -y chromium-browser
 
+# Create display configuration script
+cat > /home/pi/configure-display.sh << 'EOF'
+#!/bin/bash
+
+# Get display ID from command line argument
+DISPLAY_ID=${1:-1}
+SERVER_IP=${2:-"192.168.1.100"}
+
+echo "Configuring Display Pi for Display ID: $DISPLAY_ID"
+echo "Connecting to Server: $SERVER_IP"
+
 # Create display script
-cat > /home/pi/start-display.sh << 'EOF'
+cat > /home/pi/start-display.sh << EOL
 #!/bin/bash
 
 # Kill any existing Chromium processes
@@ -237,25 +344,36 @@ pkill chromium-browser
 sleep 2
 
 # Start Chromium in kiosk mode
-chromium-browser \
-  --kiosk \
-  --no-sandbox \
-  --disable-dev-shm-usage \
-  --disable-gpu \
-  --disable-web-security \
-  --disable-features=VizDisplayCompositor \
-  --start-fullscreen \
-  --app=http://localhost:3000/display/1 \
-  --user-data-dir=/tmp/chrome-display
-EOF
+chromium-browser \\
+  --kiosk \\
+  --no-sandbox \\
+  --disable-dev-shm-usage \\
+  --disable-gpu \\
+  --disable-web-security \\
+  --disable-features=VizDisplayCompositor \\
+  --start-fullscreen \\
+  --app=http://$SERVER_IP:3000/display/$DISPLAY_ID \\
+  --user-data-dir=/tmp/chrome-display-$DISPLAY_ID
+EOL
 
 # Make script executable
 chmod +x /home/pi/start-display.sh
+
+echo "Display configuration complete!"
+echo "Display will show: http://$SERVER_IP:3000/display/$DISPLAY_ID"
+EOF
+
+# Make configuration script executable
+chmod +x /home/pi/configure-display.sh
 ```
 
-### 7.2 Set Up Auto-Start Display
+### 9.2 Configure Display Client
 ```bash
-# Add to autostart
+# Configure this display (replace 1 with your display number)
+# Replace 192.168.1.100 with your server IP
+./configure-display.sh 1 192.168.1.100
+
+# Set up auto-start
 mkdir -p /home/pi/.config/autostart
 
 cat > /home/pi/.config/autostart/real-estate-display.desktop << 'EOF'
@@ -269,22 +387,31 @@ X-GNOME-Autostart-enabled=true
 EOF
 ```
 
+### 9.3 Test Display Connection
+```bash
+# Test connection to server
+curl http://192.168.1.100:3000
+
+# If successful, start display
+/home/pi/start-display.sh
+```
+
 ---
 
-## 🔧 Step 8: System Optimization
+## 🔧 Step 10: System Optimization (Both Server & Clients)
 
-### 8.1 Disable Unnecessary Services
+### 10.1 Disable Unnecessary Services (Both Server & Clients)
 ```bash
 # Disable unnecessary services to free up resources
 sudo systemctl disable bluetooth
 sudo systemctl disable hciuart
 sudo systemctl disable wifi-powersave
 
-# Disable desktop environment if using headless mode
+# For display clients only - disable desktop environment
 # sudo systemctl set-default multi-user.target
 ```
 
-### 8.2 Configure Swap (Optional)
+### 10.2 Configure Swap (Server Only)
 ```bash
 # Increase swap size for better performance
 sudo dphys-swapfile swapoff
@@ -294,7 +421,7 @@ sudo dphys-swapfile setup
 sudo dphys-swapfile swapon
 ```
 
-### 8.3 Set Up Log Rotation
+### 10.3 Set Up Log Rotation (Server Only)
 ```bash
 # Configure PM2 log rotation
 pm2 install pm2-logrotate
@@ -304,105 +431,119 @@ pm2 set pm2-logrotate:retain 7
 
 ---
 
-## 🌐 Step 9: Network Configuration
+## 📱 Step 11: Management & Monitoring
 
-### 9.1 Static IP Setup (Recommended)
-```bash
-# Configure static IP
-sudo nano /etc/dhcpcd.conf
+### 11.1 Access Points
+- **Server Admin Dashboard**: `http://[SERVER_IP]:3000/admin`
+- **Display 1**: `http://[SERVER_IP]:3000/display/1`
+- **Display 2**: `http://[SERVER_IP]:3000/display/2`
+- **Display N**: `http://[SERVER_IP]:3000/display/N`
 
-# Add the following (adjust for your network):
-# interface eth0
-# static ip_address=192.168.1.100/24
-# static routers=192.168.1.1
-# static domain_name_servers=8.8.8.8 8.8.4.4
-
-# Restart networking
-sudo systemctl restart dhcpcd
-```
-
-### 9.2 Firewall Configuration
-```bash
-# Install and configure UFW
-sudo apt install -y ufw
-
-# Allow SSH and HTTP
-sudo ufw allow ssh
-sudo ufw allow 3000/tcp
-
-# Enable firewall
-sudo ufw enable
-```
-
----
-
-## 📱 Step 10: Management & Monitoring
-
-### 10.1 Access Points
-- **Main Application**: `http://[PI_IP]:3000`
-- **Admin Dashboard**: `http://[PI_IP]:3000/admin`
-- **Display 1**: `http://[PI_IP]:3000/display/1`
-
-### 10.2 Useful Commands
+### 11.2 Server Management Commands
 ```bash
 # Check application status
 pm2 status
 
 # View logs
-pm2 logs real-estate-display
+pm2 logs real-estate-display-server
 
 # Restart application
-pm2 restart real-estate-display
+pm2 restart real-estate-display-server
 
 # Check database status
 docker ps
 
 # Restart database
 docker-compose restart
-
-# Update application
-cd /home/pi/real-estate-display-system
-git pull
-cd webapp
-npm run build
-pm2 restart real-estate-display
 ```
 
-### 10.3 Remote Management
+### 11.3 Display Client Management
 ```bash
-# Enable SSH access (if not already enabled)
-sudo systemctl enable ssh
-sudo systemctl start ssh
+# SSH into display client
+ssh pi@[DISPLAY_IP]
 
-# Access via SSH from another computer
-# ssh pi@[PI_IP]
+# Check display status
+ps aux | grep chromium
+
+# Restart display
+pkill chromium-browser
+/home/pi/start-display.sh
+
+# Update display configuration
+./configure-display.sh [DISPLAY_ID] [SERVER_IP]
+```
+
+### 11.4 Remote Management Script
+```bash
+# Create management script on server
+cat > /home/pi/manage-displays.sh << 'EOF'
+#!/bin/bash
+
+# List of display IPs (update with your actual IPs)
+DISPLAY_IPS=("192.168.1.101" "192.168.1.102" "192.168.1.103")
+
+echo "=== Real Estate Display System Management ==="
+echo "Server Status:"
+pm2 status
+echo
+
+echo "Database Status:"
+docker ps | grep real-estate
+echo
+
+echo "Display Status:"
+for ip in "${DISPLAY_IPS[@]}"; do
+    echo "Display $ip:"
+    ssh -o ConnectTimeout=5 pi@$ip "ps aux | grep chromium | grep -v grep" || echo "  - Not responding"
+done
+EOF
+
+chmod +x /home/pi/manage-displays.sh
 ```
 
 ---
 
-## 🔄 Step 11: Maintenance & Updates
+## 🔄 Step 12: Maintenance & Updates
 
-### 11.1 Automated Updates Script
+### 12.1 Server Updates
 ```bash
-# Create update script
-cat > /home/pi/update-app.sh << 'EOF'
+# Create update script on server
+cat > /home/pi/update-server.sh << 'EOF'
 #!/bin/bash
 cd /home/pi/real-estate-display-system
 git pull
 cd webapp
 npm install
 npm run build
-pm2 restart real-estate-display
-echo "Application updated successfully"
+pm2 restart real-estate-display-server
+echo "Server updated successfully"
 EOF
 
-chmod +x /home/pi/update-app.sh
+chmod +x /home/pi/update-server.sh
 ```
 
-### 11.2 Backup Script
+### 12.2 Display Client Updates
+```bash
+# Create update script for display clients
+cat > /home/pi/update-display.sh << 'EOF'
+#!/bin/bash
+# This script should be run on each display client
+# Update display configuration if server IP changes
+SERVER_IP=${1:-"192.168.1.100"}
+DISPLAY_ID=${2:-"1"}
+
+echo "Updating display client configuration..."
+./configure-display.sh $DISPLAY_ID $SERVER_IP
+echo "Display client updated successfully"
+EOF
+
+chmod +x /home/pi/update-display.sh
+```
+
+### 12.3 Backup Script (Server Only)
 ```bash
 # Create backup script
-cat > /home/pi/backup-app.sh << 'EOF'
+cat > /home/pi/backup-server.sh << 'EOF'
 #!/bin/bash
 BACKUP_DIR="/home/pi/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
@@ -422,10 +563,10 @@ find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
 echo "Backup completed: $DATE"
 EOF
 
-chmod +x /home/pi/backup-app.sh
+chmod +x /home/pi/backup-server.sh
 
 # Set up daily backup
-echo "0 2 * * * /home/pi/backup-app.sh" | crontab -
+echo "0 2 * * * /home/pi/backup-server.sh" | crontab -
 ```
 
 ---
@@ -434,59 +575,48 @@ echo "0 2 * * * /home/pi/backup-app.sh" | crontab -
 
 ### Common Issues & Solutions
 
-#### Application Won't Start
+#### Server Issues
 ```bash
-# Check PM2 status
+# Application won't start
 pm2 status
-
-# Check logs
-pm2 logs real-estate-display
-
-# Restart everything
+pm2 logs real-estate-display-server
 pm2 restart all
-docker-compose restart
-```
 
-#### Database Connection Issues
-```bash
-# Check if database is running
+# Database connection issues
 docker ps
-
-# Restart database
-docker-compose down
-docker-compose up -d
-
-# Check database logs
+docker-compose restart
 docker logs real-estate-db-1
 ```
 
-#### Display Not Showing
+#### Display Client Issues
 ```bash
-# Restart display script
+# Display not showing
+ssh pi@[DISPLAY_IP]
+ps aux | grep chromium
 pkill chromium-browser
 /home/pi/start-display.sh
 
-# Check if application is accessible
-curl http://localhost:3000
+# Connection to server failed
+curl http://[SERVER_IP]:3000
+ping [SERVER_IP]
 ```
 
-#### Performance Issues
+#### Network Issues
 ```bash
-# Check system resources
-htop
+# Check network connectivity
+ping google.com
+ping [SERVER_IP]
 
-# Check PM2 memory usage
-pm2 monit
-
-# Restart application
-pm2 restart real-estate-display
+# Check firewall
+sudo ufw status
+sudo ufw allow 3000/tcp
 ```
 
 ---
 
-## 📊 Monitoring Dashboard
+## 📊 Health Monitoring
 
-### System Health Check Script
+### System Health Check Script (Server)
 ```bash
 cat > /home/pi/health-check.sh << 'EOF'
 #!/bin/bash
@@ -494,7 +624,7 @@ echo "=== Real Estate Display System Health Check ==="
 echo "Date: $(date)"
 echo
 
-echo "1. Application Status:"
+echo "1. Server Application Status:"
 pm2 status
 echo
 
@@ -516,6 +646,14 @@ echo
 
 echo "6. Application Response:"
 curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:3000
+echo
+
+echo "7. Display Client Status:"
+DISPLAY_IPS=("192.168.1.101" "192.168.1.102" "192.168.1.103")
+for ip in "${DISPLAY_IPS[@]}"; do
+    echo "Display $ip:"
+    ssh -o ConnectTimeout=5 pi@$ip "ps aux | grep chromium | grep -v grep" || echo "  - Not responding"
+done
 EOF
 
 chmod +x /home/pi/health-check.sh
@@ -525,20 +663,42 @@ chmod +x /home/pi/health-check.sh
 
 ## 🎯 Final Checklist
 
-- [ ] Raspberry Pi OS installed and updated
+### Server Pi Setup:
+- [ ] Raspberry Pi 4/5 (8GB RAM) with 64GB+ microSD
+- [ ] Raspberry Pi OS (64-bit) installed
 - [ ] Docker and Docker Compose installed
 - [ ] Node.js 18+ installed
 - [ ] Application cloned and dependencies installed
-- [ ] Environment variables configured
+- [ ] Environment variables configured with server IP
 - [ ] Database started and initialized
 - [ ] Application built and running with PM2
-- [ ] Chromium installed and display script created
-- [ ] Auto-start configured
-- [ ] Static IP configured (optional)
+- [ ] Static IP configured
 - [ ] Firewall configured
 - [ ] Backup script set up
 - [ ] Health check script created
-- [ ] Application accessible via web browser
+
+### Display Pi Setup (for each display):
+- [ ] Raspberry Pi Zero 2W (or Pi 4 2GB) with 16GB microSD
+- [ ] Raspberry Pi OS Lite (64-bit) installed
+- [ ] Chromium browser installed
+- [ ] Display configuration script created
+- [ ] Auto-start configured
+- [ ] WiFi/Ethernet configured
+- [ ] Display settings configured
+- [ ] Connection to server tested
+
+### Network Configuration:
+- [ ] Server has static IP (e.g., 192.168.1.100)
+- [ ] Display clients can reach server
+- [ ] Firewall allows port 3000
+- [ ] SSH access configured for management
+
+### Testing:
+- [ ] Server admin dashboard accessible
+- [ ] All displays showing correct content
+- [ ] Auto-refresh working on displays
+- [ ] Management scripts functional
+- [ ] Backup system working
 
 ---
 
@@ -546,14 +706,21 @@ chmod +x /home/pi/health-check.sh
 
 For issues specific to this deployment:
 1. Check the troubleshooting section above
-2. Review PM2 logs: `pm2 logs real-estate-display`
+2. Review PM2 logs: `pm2 logs real-estate-display-server`
 3. Check Docker logs: `docker logs real-estate-db-1`
 4. Run health check: `/home/pi/health-check.sh`
+5. Check display status: `/home/pi/manage-displays.sh`
 
 For application-specific issues, refer to the main [GitHub repository](https://github.com/mihalykrich/real-estate-display-system).
 
 ---
 
-**🎉 Congratulations! Your Real Estate Display System is now running on Raspberry Pi!**
+**🎉 Congratulations! Your Real Estate Display System is now running on Raspberry Pi with server-client architecture!**
 
-The system will automatically start on boot and display your property listings on the A4 LCD screen. You can manage the displays remotely through the admin dashboard at `http://[PI_IP]:3000/admin`.
+The system will automatically start on boot with:
+- **One server Pi** managing the application and database
+- **Multiple display Pi clients** showing property listings
+- **Centralized management** through the admin dashboard
+- **Scalable architecture** for adding more displays
+
+You can manage all displays remotely through the admin dashboard at `http://[SERVER_IP]:3000/admin`.
