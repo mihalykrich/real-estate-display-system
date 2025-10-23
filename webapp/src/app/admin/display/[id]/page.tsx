@@ -414,34 +414,6 @@ export default async function AdminDisplayPage({
               </div>
             </div>
 
-            {/* QR Code Configuration */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">QR Code Settings</h2>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <input 
-                    type="checkbox" 
-                    name="showQrCode" 
-                    id="showQrCode"
-                    defaultChecked={display.showQrCode ?? false}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <label htmlFor="showQrCode" className="text-sm font-medium text-gray-700">
-                    Show QR Code on Display
-                  </label>
-                </div>
-                <p className="text-xs text-gray-500 ml-7">When enabled, a QR code will be displayed at the bottom of the sidebar</p>
-                
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">QR Code Image</label>
-                  <FileDrop name="qrCode" label="QR code" existingFileName={display.qrCodePath} />
-                  <div className="flex items-center gap-2">
-                    <button formAction={async () => { 'use server'; await deleteImageAction(id, 'qrCodePath'); }} className="bg-red-100 hover:bg-red-200 text-red-700 text-sm px-3 py-1 rounded transition-colors duration-200">Delete</button>
-                    <button formAction={async () => { 'use server'; await generateQrAction(id); }} className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm px-3 py-1 rounded transition-colors duration-200">Generate QR Code</button>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Image Carousel Configuration */}
             <div className="bg-gray-50 rounded-lg p-6">
@@ -495,6 +467,20 @@ export default async function AdminDisplayPage({
             <div className="bg-gray-50 rounded-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">QR Code</h2>
               <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input 
+                    type="checkbox" 
+                    name="showQrCode" 
+                    id="showQrCode"
+                    defaultChecked={display.showQrCode ?? false}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="showQrCode" className="text-sm font-medium text-gray-700">
+                    Show QR Code on Display
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 ml-7">When enabled, a QR code will be displayed at the bottom of the sidebar</p>
+                
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">QR Code Image</label>
                   <FileDrop name="qrCode" label="QR code" existingFileName={display.qrCodePath} />
