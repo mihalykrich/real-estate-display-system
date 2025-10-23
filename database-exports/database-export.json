@@ -1,0 +1,169 @@
+{
+  "exportInfo": {
+    "generatedAt": "2025-10-23T16:00:29.388Z",
+    "version": "1.0",
+    "description": "Real Estate Display System Database Export",
+    "tables": [
+      "User",
+      "Display",
+      "ScheduledDisplay",
+      "ScheduledImage"
+    ]
+  },
+  "schema": {
+    "User": {
+      "fields": [
+        "id",
+        "email",
+        "name",
+        "password",
+        "role",
+        "companyLogoPath",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [
+        "User_email_key"
+      ],
+      "constraints": [
+        "User_pkey"
+      ]
+    },
+    "Display": {
+      "fields": [
+        "id",
+        "address",
+        "location",
+        "price",
+        "priceType",
+        "bedrooms",
+        "bathrooms",
+        "garage",
+        "livingroom",
+        "propertyType",
+        "description",
+        "features",
+        "contactNumber",
+        "email",
+        "sidebarColor",
+        "sidebarPosition",
+        "showCompanyLogo",
+        "companyLogoPath",
+        "showQrCode",
+        "qrCodePath",
+        "carouselEnabled",
+        "carouselDuration",
+        "carouselTransition",
+        "mainImage",
+        "image1",
+        "image2",
+        "image3",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [],
+      "constraints": [
+        "Display_pkey"
+      ]
+    },
+    "ScheduledDisplay": {
+      "fields": [
+        "id",
+        "name",
+        "description",
+        "displayId",
+        "startDate",
+        "endDate",
+        "isActive",
+        "contentData",
+        "showQrCode",
+        "qrCodePath",
+        "showCompanyLogo",
+        "createdAt",
+        "updatedAt"
+      ],
+      "indexes": [
+        "ScheduledDisplay_displayId_idx"
+      ],
+      "constraints": [
+        "ScheduledDisplay_pkey",
+        "ScheduledDisplay_displayId_fkey"
+      ]
+    },
+    "ScheduledImage": {
+      "fields": [
+        "id",
+        "scheduledDisplayId",
+        "imagePath",
+        "imageType",
+        "createdAt"
+      ],
+      "indexes": [
+        "ScheduledImage_scheduledDisplayId_idx"
+      ],
+      "constraints": [
+        "ScheduledImage_pkey",
+        "ScheduledImage_scheduledDisplayId_fkey"
+      ]
+    }
+  },
+  "sampleData": {
+    "users": [
+      {
+        "id": "admin-user-1",
+        "email": "admin@realestate.com",
+        "name": "Admin User",
+        "role": "admin",
+        "companyLogoPath": null
+      }
+    ],
+    "displays": [
+      {
+        "id": 1,
+        "address": "123 Test Street",
+        "location": "City Center",
+        "price": "500",
+        "priceType": "PCM",
+        "bedrooms": 4,
+        "bathrooms": 2,
+        "garage": 1,
+        "livingroom": 1,
+        "propertyType": "House",
+        "description": "Beautiful family home in a prime location with spacious rooms.",
+        "features": "Modern kitchen, Garden, Parking",
+        "contactNumber": "+1-555-0123",
+        "email": "contact@realestate.com",
+        "sidebarColor": "#22c353",
+        "sidebarPosition": "right",
+        "showCompanyLogo": true,
+        "showQrCode": false,
+        "carouselEnabled": true,
+        "carouselDuration": 15000,
+        "carouselTransition": "fade"
+      },
+      {
+        "id": 2,
+        "address": "456 Oak Avenue",
+        "location": "Suburb District",
+        "price": "750",
+        "priceType": "PCM",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "garage": 2,
+        "livingroom": 1,
+        "propertyType": "Apartment",
+        "description": "Modern apartment with city views and modern amenities.",
+        "features": "Balcony, Gym, Pool",
+        "contactNumber": "+1-555-0124",
+        "email": "info@realestate.com",
+        "sidebarColor": "#3b82f6",
+        "sidebarPosition": "left",
+        "showCompanyLogo": false,
+        "showQrCode": true,
+        "carouselEnabled": true,
+        "carouselDuration": 12000,
+        "carouselTransition": "slide"
+      }
+    ]
+  }
+}
