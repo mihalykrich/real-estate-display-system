@@ -118,4 +118,69 @@ model Display {
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  scheduledDisplays ScheduledDisplay[]
+}
+
+// Scheduled Displays for automated content updates
+model ScheduledDisplay {
+  id             Int       @id @default(autoincrement())
+  
+  // Scheduling
+  name           String    // Display name/title
+  description    String?   @db.Text // Description of this scheduled content
+  startDate      DateTime  // When this schedule should start
+  endDate        DateTime? // When this schedule should end (null = indefinite)
+  isActive       Boolean   @default(true) // Enable/disable this schedule
+  
+  // Target Display
+  targetDisplayId Int     // Which display this schedule applies to
+  targetDisplay   Display @relation(fields: [targetDisplayId], references: [id], onDelete: Cascade)
+  
+  // Schedule Pattern
+  scheduleType   String    @default("once") // "once", "daily", "weekly", "monthly"
+  scheduleTime   String?   // Time of day (HH:MM format) for recurring schedules
+  scheduleDays   String?   // Comma-separated days for weekly schedules (0=Sunday, 1=Monday, etc.)
+  scheduleDate   Int?      // Day of month for monthly schedules
+  
+  // Content Data (JSON)
+  contentData    String    @db.Text // JSON string containing all display data
+  
+  // Status
+  lastExecuted   DateTime? // When this schedule was last executed
+  executionCount Int       @default(0) // How many times this has been executed
+  nextExecution  DateTime? // When this schedule should next execute
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  images         ScheduledImage[]
+  
+  @@index([targetDisplayId])
+  @@index([startDate])
+  @@index([isActive])
+}
+
+// Scheduled Images for scheduled displays
+model ScheduledImage {
+  id               Int       @id @default(autoincrement())
+  
+  // Reference to scheduled display
+  scheduledDisplayId Int
+  scheduledDisplay   ScheduledDisplay @relation(fields: [scheduledDisplayId], references: [id], onDelete: Cascade)
+  
+  // Image details
+  imageType        String    // "mainImage", "image1", "image2", "image3", "qrCode", "companyLogo"
+  fileName         String    // Original filename
+  filePath         String    // Path to uploaded file
+  fileSize         Int?      // File size in bytes
+  mimeType         String?   // MIME type of the file
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  @@index([scheduledDisplayId])
+  @@index([imageType])
 }
