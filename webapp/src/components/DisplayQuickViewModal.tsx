@@ -124,172 +124,341 @@ export function DisplayQuickViewModal({ isOpen, onClose, displayId }: DisplayQui
 
 
   // Sidebar content component
-  const SidebarContent = () => (
-    <div 
-      className="text-white p-3 lg:p-4 flex flex-col"
-      style={{ 
-        background: `linear-gradient(to bottom, ${display.sidebarColor || '#7C3AED'}, ${adjustColor(display.sidebarColor || '#7C3AED', -20)})` 
-      }}
-    >
-      {/* Header Section */}
-      <div className="mb-3">
-        <h1 className="text-lg lg:text-xl font-bold mb-1">
-          {display.address || "Property Address"}
-        </h1>
-        <h2 className="text-sm lg:text-base font-semibold mb-2">
-          {display.location || "Location"}
-        </h2>
-        <div className="text-xl lg:text-2xl font-bold">
-          {display.price || "£0"} {display.priceType && (
-            <span className="text-sm font-normal">{display.priceType}</span>
-          )}
-        </div>
-      </div>
+  const SidebarContent = () => {
+    // Special layout for bottom sidebar
+    if (sidebarPosition === 'bottom') {
+      return (
+        <div 
+          className="text-white p-2 lg:p-3"
+          style={{ 
+            background: `linear-gradient(to bottom, ${display.sidebarColor || '#7C3AED'}, ${adjustColor(display.sidebarColor || '#7C3AED', -20)})` 
+          }}
+        >
+          {/* Header Section */}
+          <div className="mb-2">
+            <h1 className="text-sm lg:text-base font-bold mb-1">
+              {display.address || "Property Address"}
+            </h1>
+            <h2 className="text-xs lg:text-sm font-semibold mb-1">
+              {display.location || "Location"}
+            </h2>
+            <div className="text-lg lg:text-xl font-bold">
+              {display.price || "£0"} {display.priceType && (
+                <span className="text-xs font-normal">{display.priceType}</span>
+              )}
+            </div>
+          </div>
 
-      {/* Property Features Icons */}
-      {(display.bedrooms || display.bathrooms || display.livingroom || display.garage) && (
-        <div className="flex items-center gap-3 mb-3">
-          {display.bedrooms && (
-            <div className="flex items-center gap-1">
-              <CustomIcon type="bedroom" size={16} className="text-white" />
-              <span className="text-sm font-semibold">{display.bedrooms}</span>
+          {/* 3-Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 lg:gap-3">
+            
+            {/* Column 1: Property Features Icons */}
+            <div className="flex flex-col justify-center">
+              {(display.bedrooms || display.bathrooms || display.livingroom || display.garage) && (
+                <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+                  {display.bedrooms && (
+                    <div className="flex items-center gap-1">
+                      <CustomIcon type="bedroom" size={14} className="text-white" />
+                      <span className="text-xs font-semibold">{display.bedrooms}</span>
+                    </div>
+                  )}
+                  {display.bathrooms && (
+                    <div className="flex items-center gap-1">
+                      <CustomIcon type="bathroom" size={14} className="text-white" />
+                      <span className="text-xs font-semibold">{display.bathrooms}</span>
+                    </div>
+                  )}
+                  {display.livingroom && (
+                    <div className="flex items-center gap-1">
+                      <CustomIcon type="livingroom" size={14} className="text-white" />
+                      <span className="text-xs font-semibold">{display.livingroom}</span>
+                    </div>
+                  )}
+                  {display.garage && (
+                    <div className="flex items-center gap-1">
+                      <CustomIcon type="garage" size={14} className="text-white" />
+                      <span className="text-xs font-semibold">{display.garage}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-          {display.bathrooms && (
-            <div className="flex items-center gap-1">
-              <CustomIcon type="bathroom" size={16} className="text-white" />
-              <span className="text-sm font-semibold">{display.bathrooms}</span>
-            </div>
-          )}
-          {display.livingroom && (
-            <div className="flex items-center gap-1">
-              <CustomIcon type="livingroom" size={16} className="text-white" />
-              <span className="text-sm font-semibold">{display.livingroom}</span>
-            </div>
-          )}
-          {display.garage && (
-            <div className="flex items-center gap-1">
-              <CustomIcon type="garage" size={16} className="text-white" />
-              <span className="text-sm font-semibold">{display.garage}</span>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Property Description */}
-      {display.description && (
+            {/* Column 2: Description */}
+            <div className="flex flex-col justify-center">
+              {display.description && (
+                <div>
+                  <p className="text-xs leading-relaxed opacity-90 line-clamp-2">
+                    {display.description}
+                  </p>
+                </div>
+              )}
+              
+              {/* Key Features */}
+              {features.length > 0 && (
+                <div className="mt-1">
+                  <h3 className="text-xs font-semibold mb-1 uppercase tracking-wide">Key Features</h3>
+                  <ul className="space-y-0.5">
+                    {features.slice(0, 2).map((feature, index) => (
+                      <li key={index} className="text-xs opacity-90">
+                        • {feature.trim()}
+                      </li>
+                    ))}
+                    {features.length > 2 && (
+                      <li className="text-xs opacity-70">
+                        +{features.length - 2} more...
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Column 3: QR Code and Company Logo */}
+            <div className="flex flex-col justify-center items-center">
+              {(() => {
+                const showQrCode = display.showQrCode && display.qrCodePath;
+                const showCompanyLogo = display.showCompanyLogo && display.companyLogoPath;
+                
+                if (!showQrCode && !showCompanyLogo) return null;
+                
+                // If only one item is enabled, center it
+                if (showQrCode && !showCompanyLogo) {
+                  return (
+                    <div className="text-center">
+                      <h3 className="text-xs font-semibold mb-1 opacity-90">Scan for more information</h3>
+                      <div className="w-10 h-10 relative bg-white rounded shadow p-1">
+                        <PropertyImage 
+                          src={`uploads/${displayId}/${display.qrCodePath}`}
+                          alt="QR Code"
+                          fallbackText="QR Code"
+                          fill={true}
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+                
+                if (!showQrCode && showCompanyLogo) {
+                  return (
+                    <div className="text-center">
+                      <div className="w-20 h-5 relative">
+                        <PropertyImage 
+                          src={`uploads/${displayId}/${display.companyLogoPath}`}
+                          alt="Company Logo"
+                          fallbackText="Logo"
+                          fill={true}
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // If both are enabled, show them vertically stacked
+                return (
+                  <div className="text-center space-y-1">
+                    <div>
+                      <h3 className="text-xs font-semibold mb-1 opacity-90">Scan for more information</h3>
+                      <div className="w-8 h-8 relative bg-white rounded shadow p-1 mx-auto">
+                        <PropertyImage 
+                          src={`uploads/${displayId}/${display.qrCodePath}`}
+                          alt="QR Code"
+                          fallbackText="QR Code"
+                          fill={true}
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="w-16 h-4 relative mx-auto">
+                        <PropertyImage 
+                          src={`uploads/${displayId}/${display.companyLogoPath}`}
+                          alt="Company Logo"
+                          fallbackText="Logo"
+                          fill={true}
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Default layout for left/right sidebars
+    return (
+      <div 
+        className="text-white p-3 lg:p-4 flex flex-col"
+        style={{ 
+          background: `linear-gradient(to bottom, ${display.sidebarColor || '#7C3AED'}, ${adjustColor(display.sidebarColor || '#7C3AED', -20)})` 
+        }}
+      >
+        {/* Header Section */}
         <div className="mb-3">
-          <p className="text-xs leading-relaxed opacity-90">
-            {display.description}
-          </p>
-        </div>
-      )}
-
-      {/* Key Features */}
-      {features.length > 0 && (
-        <div className="mb-3">
-          <h3 className="text-xs font-semibold mb-2 uppercase tracking-wide">Key Features</h3>
-          <ul className="space-y-1">
-            {features.slice(0, 3).map((feature, index) => (
-              <li key={index} className="text-xs opacity-90">
-                • {feature.trim()}
-              </li>
-            ))}
-            {features.length > 3 && (
-              <li className="text-xs opacity-90">• +{features.length - 3} more...</li>
+          <h1 className="text-lg lg:text-xl font-bold mb-1">
+            {display.address || "Property Address"}
+          </h1>
+          <h2 className="text-sm lg:text-base font-semibold mb-2">
+            {display.location || "Location"}
+          </h2>
+          <div className="text-xl lg:text-2xl font-bold">
+            {display.price || "£0"} {display.priceType && (
+              <span className="text-sm font-normal">{display.priceType}</span>
             )}
-          </ul>
+          </div>
         </div>
-      )}
 
-      {/* Contact Information */}
-      <div className="border-t border-white/20 pt-2 mb-3">
-        {display.contactNumber && (
-          <div className="text-xs mb-1">
-            <span className="font-semibold">Phone:</span> {display.contactNumber}
+        {/* Property Features Icons */}
+        {(display.bedrooms || display.bathrooms || display.livingroom || display.garage) && (
+          <div className="flex items-center gap-3 mb-3">
+            {display.bedrooms && (
+              <div className="flex items-center gap-1">
+                <CustomIcon type="bedroom" size={16} className="text-white" />
+                <span className="text-sm font-semibold">{display.bedrooms}</span>
+              </div>
+            )}
+            {display.bathrooms && (
+              <div className="flex items-center gap-1">
+                <CustomIcon type="bathroom" size={16} className="text-white" />
+                <span className="text-sm font-semibold">{display.bathrooms}</span>
+              </div>
+            )}
+            {display.livingroom && (
+              <div className="flex items-center gap-1">
+                <CustomIcon type="livingroom" size={16} className="text-white" />
+                <span className="text-sm font-semibold">{display.livingroom}</span>
+              </div>
+            )}
+            {display.garage && (
+              <div className="flex items-center gap-1">
+                <CustomIcon type="garage" size={16} className="text-white" />
+                <span className="text-sm font-semibold">{display.garage}</span>
+              </div>
+            )}
           </div>
         )}
-        {display.email && (
-          <div className="text-xs mb-2">
-            <span className="font-semibold">Email:</span> {display.email}
+
+        {/* Property Description */}
+        {display.description && (
+          <div className="mb-3">
+            <p className="text-xs leading-relaxed opacity-90">
+              {display.description}
+            </p>
           </div>
         )}
-      </div>
 
-      {/* Bottom Section - QR Code and Company Logo */}
-      <div className="mt-auto">
-        {(() => {
-          const showQrCode = display.showQrCode && display.qrCodePath;
-          const showCompanyLogo = display.showCompanyLogo && display.companyLogoPath;
-          
-          if (!showQrCode && !showCompanyLogo) return null;
-          
-          // If only one item is enabled, center it
-          if (showQrCode && !showCompanyLogo) {
-            return (
-              <div className="text-center">
-                <h3 className="text-xs font-semibold mb-2 opacity-90">Scan for more information</h3>
-                <div className="w-12 h-12 relative bg-white rounded shadow p-1 mx-auto">
-                  <PropertyImage 
-                    src={`uploads/${displayId}/${display.qrCodePath}`}
-                    alt="QR Code"
-                    fallbackText="QR Code"
-                    fill={true}
-                    className="object-contain"
-                  />
-                </div>
-              </div>
-            );
-          }
-          
-          if (!showQrCode && showCompanyLogo) {
-            return (
-              <div className="text-center py-2 px-2">
-                <div className="w-26 h-7 relative mx-auto">
-                  <PropertyImage 
-                    src={`uploads/${displayId}/${display.companyLogoPath}`}
-                    alt="Company Logo"
-                    fallbackText="Logo"
-                    fill={true}
-                    className="object-contain"
-                  />
-                </div>
-              </div>
-            );
-          }
-          
-          // If both are enabled, show them side by side
-          return (
-            <div className="flex items-end justify-center gap-2">
-              <div className="text-center">
-                <h3 className="text-xs font-semibold mb-2 opacity-90">Scan for more information</h3>
-                <div className="w-10 h-10 relative bg-white rounded shadow p-1">
-                  <PropertyImage 
-                    src={`uploads/${displayId}/${display.qrCodePath}`}
-                    alt="QR Code"
-                    fallbackText="QR Code"
-                    fill={true}
-                    className="object-contain"
-                  />
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="w-26 h-7 relative">
-                  <PropertyImage 
-                    src={`uploads/${displayId}/${display.companyLogoPath}`}
-                    alt="Company Logo"
-                    fallbackText="Logo"
-                    fill={true}
-                    className="object-contain"
-                  />
-                </div>
-              </div>
+        {/* Key Features */}
+        {features.length > 0 && (
+          <div className="mb-3">
+            <h3 className="text-xs font-semibold mb-2 uppercase tracking-wide">Key Features</h3>
+            <ul className="space-y-1">
+              {features.slice(0, 3).map((feature, index) => (
+                <li key={index} className="text-xs opacity-90">
+                  • {feature.trim()}
+                </li>
+              ))}
+              {features.length > 3 && (
+                <li className="text-xs opacity-90">• +{features.length - 3} more...</li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        {/* Contact Information */}
+        <div className="border-t border-white/20 pt-2 mb-3">
+          {display.contactNumber && (
+            <div className="text-xs mb-1">
+              <span className="font-semibold">Phone:</span> {display.contactNumber}
             </div>
-          );
-        })()}
+          )}
+          {display.email && (
+            <div className="text-xs mb-2">
+              <span className="font-semibold">Email:</span> {display.email}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Section - QR Code and Company Logo */}
+        <div className="mt-auto">
+          {(() => {
+            const showQrCode = display.showQrCode && display.qrCodePath;
+            const showCompanyLogo = display.showCompanyLogo && display.companyLogoPath;
+            
+            if (!showQrCode && !showCompanyLogo) return null;
+            
+            // If only one item is enabled, center it
+            if (showQrCode && !showCompanyLogo) {
+              return (
+                <div className="text-center">
+                  <h3 className="text-xs font-semibold mb-2 opacity-90">Scan for more information</h3>
+                  <div className="w-12 h-12 relative bg-white rounded shadow p-1 mx-auto">
+                    <PropertyImage 
+                      src={`uploads/${displayId}/${display.qrCodePath}`}
+                      alt="QR Code"
+                      fallbackText="QR Code"
+                      fill={true}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+              );
+            }
+            
+            if (!showQrCode && showCompanyLogo) {
+              return (
+                <div className="text-center py-2 px-2">
+                  <div className="w-26 h-7 relative mx-auto">
+                    <PropertyImage 
+                      src={`uploads/${displayId}/${display.companyLogoPath}`}
+                      alt="Company Logo"
+                      fallbackText="Logo"
+                      fill={true}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+              );
+            }
+            
+            // If both are enabled, show them side by side
+            return (
+              <div className="flex items-end justify-center gap-2">
+                <div className="text-center">
+                  <h3 className="text-xs font-semibold mb-2 opacity-90">Scan for more information</h3>
+                  <div className="w-10 h-10 relative bg-white rounded shadow p-1">
+                    <PropertyImage 
+                      src={`uploads/${displayId}/${display.qrCodePath}`}
+                      alt="QR Code"
+                      fallbackText="QR Code"
+                      fill={true}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="w-26 h-7 relative">
+                    <PropertyImage 
+                      src={`uploads/${displayId}/${display.companyLogoPath}`}
+                      alt="Company Logo"
+                      fallbackText="Logo"
+                      fill={true}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Images content component
   const ImagesContent = () => (
