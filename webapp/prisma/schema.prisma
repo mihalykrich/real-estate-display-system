@@ -84,6 +84,7 @@ model Display {
   bedrooms       Int?
   bathrooms      Int?
   garage         Int?
+  livingroom     Int?
   propertyType   String?   // "House", "Apartment", "Cottage", etc.
   
   // Content
@@ -98,11 +99,17 @@ model Display {
   
   // Contact & QR
   qrCodePath     String?
+  showQrCode     Boolean? @default(false)    // Show/hide QR code
   contactNumber  String?
   email          String?
   
   // Display Styling
   sidebarColor   String?   @default("#7C3AED") // Default purple
+  sidebarPosition String?  @default("left")    // "left", "right", or "bottom"
+  
+  // Company Logo Display
+  showCompanyLogo Boolean? @default(false)    // Show/hide company logo
+  companyLogoPath String?                      // Path to company logo file
   
   // Image Carousel Configuration
   carouselEnabled Boolean? @default(false)     // Enable/disable carousel

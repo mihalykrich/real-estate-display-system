@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { UserManagement } from '@/components/UserManagement';
 import { DataManagement } from '@/components/DataManagement';
+import { IconManagement } from '@/components/IconManagement';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -138,6 +139,11 @@ export default async function AdminDashboard() {
               activeDisplays={activeDisplays}
             />
           </div>
+        </div>
+
+        {/* Icon Management */}
+        <div className="mt-8">
+          <IconManagement />
         </div>
       </div>
     </div>

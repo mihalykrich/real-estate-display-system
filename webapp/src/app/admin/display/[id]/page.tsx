@@ -21,6 +21,7 @@ async function updateDisplay(id: number, formData: FormData) {
   const bedrooms = formData.get('bedrooms') ? parseInt(formData.get('bedrooms') as string) : null;
   const bathrooms = formData.get('bathrooms') ? parseInt(formData.get('bathrooms') as string) : null;
   const garage = formData.get('garage') ? parseInt(formData.get('garage') as string) : null;
+  const livingroom = formData.get('livingroom') ? parseInt(formData.get('livingroom') as string) : null;
   const propertyType = (formData.get('propertyType') as string)?.trim() || null;
   
   // Content
@@ -33,6 +34,14 @@ async function updateDisplay(id: number, formData: FormData) {
   
   // Display Styling
   const sidebarColor = (formData.get('sidebarColor') as string)?.trim() || '#7C3AED';
+  const sidebarPosition = (formData.get('sidebarPosition') as string)?.trim() || 'left';
+  
+  // Company Logo Configuration
+  const showCompanyLogo = formData.get('showCompanyLogo') === 'on';
+  const companyLogo = (formData.get('companyLogo') as unknown as File) || null;
+  
+  // QR Code Configuration
+  const showQrCode = formData.get('showQrCode') === 'on';
   
   // Carousel Configuration
   const carouselEnabled = formData.get('carouselEnabled') === 'on';
@@ -49,10 +58,11 @@ async function updateDisplay(id: number, formData: FormData) {
   const dir = `uploads/${id}`;
   const updates: any = { 
     address, location, price, priceType,
-    bedrooms, bathrooms, garage, propertyType,
+    bedrooms, bathrooms, garage, livingroom, propertyType,
     description, features,
     contactNumber, email,
-    sidebarColor,
+    sidebarColor, sidebarPosition,
+    showCompanyLogo, showQrCode,
     carouselEnabled, carouselDuration, carouselTransition
   };
   
@@ -60,11 +70,13 @@ async function updateDisplay(id: number, formData: FormData) {
   const saved1 = await saveUploadedFile(dir, 'img1', image1);
   const saved2 = await saveUploadedFile(dir, 'img2', image2);
   const saved3 = await saveUploadedFile(dir, 'img3', image3);
+  const savedCompanyLogo = await saveUploadedFile(dir, 'company-logo', companyLogo);
   
   if (savedMain) updates.mainImage = savedMain;
   if (saved1) updates.image1 = saved1;
   if (saved2) updates.image2 = saved2;
   if (saved3) updates.image3 = saved3;
+  if (savedCompanyLogo) updates.companyLogoPath = savedCompanyLogo;
 
   console.log('Updating display with data:', updates);
   console.log('Carousel settings:', { carouselEnabled, carouselDurationSeconds, carouselDuration, carouselTransition });
@@ -191,7 +203,7 @@ export default async function AdminDisplayPage({
             {/* Property Features Section */}
             <div className="bg-gray-50 rounded-lg p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Property Features</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <label className="block">
                   <div className="text-sm font-medium text-gray-700 mb-2">Bedrooms</div>
                   <input 
@@ -211,6 +223,17 @@ export default async function AdminDisplayPage({
                     min="0" 
                     max="10"
                     defaultValue={display.bathrooms ?? ''} 
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                  />
+                </label>
+                <label className="block">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Living Rooms</div>
+                  <input 
+                    name="livingroom" 
+                    type="number" 
+                    min="0" 
+                    max="5"
+                    defaultValue={display.livingroom ?? ''} 
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                   />
                 </label>
@@ -336,15 +359,85 @@ export default async function AdminDisplayPage({
                       {display.sidebarColor ?? '#7C3AED'}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Choose a color for the left sidebar background</p>
+                  <p className="text-xs text-gray-500 mt-1">Choose a color for the sidebar background</p>
                 </label>
-                <div className="flex items-end">
-                  <div className="text-sm text-gray-600">
-                    <p className="font-medium mb-1">Preview:</p>
-                    <div 
-                      className="w-full h-16 rounded-lg border-2 border-gray-300"
-                      style={{ backgroundColor: display.sidebarColor ?? '#7C3AED' }}
-                    ></div>
+                <label className="block">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Sidebar Position</div>
+                  <select 
+                    name="sidebarPosition" 
+                    defaultValue={display.sidebarPosition ?? 'left'} 
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="left">Left Side</option>
+                    <option value="right">Right Side</option>
+                    <option value="bottom">Bottom</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Choose where to position the sidebar</p>
+                </label>
+              </div>
+              <div className="mt-4">
+                <div className="text-sm text-gray-600">
+                  <p className="font-medium mb-1">Color Preview:</p>
+                  <div 
+                    className="w-full h-16 rounded-lg border-2 border-gray-300"
+                    style={{ backgroundColor: display.sidebarColor ?? '#7C3AED' }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Company Logo Configuration */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Company Logo</h2>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input 
+                    type="checkbox" 
+                    name="showCompanyLogo" 
+                    id="showCompanyLogo"
+                    defaultChecked={display.showCompanyLogo ?? false}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="showCompanyLogo" className="text-sm font-medium text-gray-700">
+                    Show Company Logo on Display
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 ml-7">When enabled, your company logo will be displayed on the property listing</p>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Company Logo Image</label>
+                  <FileDrop name="companyLogo" label="Company logo" existingFileName={display.companyLogoPath} />
+                  <div className="flex items-center gap-2">
+                    <button formAction={async () => { 'use server'; await deleteImageAction(id, 'companyLogoPath'); }} className="bg-red-100 hover:bg-red-200 text-red-700 text-sm px-3 py-1 rounded transition-colors duration-200">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* QR Code Configuration */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">QR Code Settings</h2>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input 
+                    type="checkbox" 
+                    name="showQrCode" 
+                    id="showQrCode"
+                    defaultChecked={display.showQrCode ?? false}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="showQrCode" className="text-sm font-medium text-gray-700">
+                    Show QR Code on Display
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 ml-7">When enabled, a QR code will be displayed at the bottom of the sidebar</p>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">QR Code Image</label>
+                  <FileDrop name="qrCode" label="QR code" existingFileName={display.qrCodePath} />
+                  <div className="flex items-center gap-2">
+                    <button formAction={async () => { 'use server'; await deleteImageAction(id, 'qrCodePath'); }} className="bg-red-100 hover:bg-red-200 text-red-700 text-sm px-3 py-1 rounded transition-colors duration-200">Delete</button>
+                    <button formAction={async () => { 'use server'; await generateQrAction(id); }} className="bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm px-3 py-1 rounded transition-colors duration-200">Generate QR Code</button>
                   </div>
                 </div>
               </div>

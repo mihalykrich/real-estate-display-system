@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { PropertyImage } from "@/components/PropertyImage";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { CustomIcon } from "@/components/CustomIcon";
 
 // Helper function to adjust color brightness
 function adjustColor(color: string, amount: number): string {
@@ -32,175 +33,265 @@ export default async function DisplayPage({ params }: { params: Promise<{ id: st
     price: display.price,
     bedrooms: display.bedrooms,
     bathrooms: display.bathrooms,
-    sidebarColor: display.sidebarColor
+    sidebarColor: display.sidebarColor,
+    sidebarPosition: display.sidebarPosition,
+    showCompanyLogo: display.showCompanyLogo
   });
 
   // Parse features from text (one per line)
   const features = display.features ? display.features.split('\n').filter(f => f.trim()) : [];
+  const sidebarPosition = display.sidebarPosition || 'left';
+
+
+  // Sidebar content component
+  const SidebarContent = () => (
+    <div 
+      className="text-white p-6 lg:p-8 flex flex-col"
+      style={{ 
+        background: `linear-gradient(to bottom, ${display.sidebarColor || '#7C3AED'}, ${adjustColor(display.sidebarColor || '#7C3AED', -20)})` 
+      }}
+    >
+      {/* Header Section */}
+      <div className="mb-6">
+        <h1 className="text-2xl lg:text-3xl font-bold mb-2">
+          {display.address || "Property Address"}
+        </h1>
+        <h2 className="text-lg lg:text-xl font-semibold mb-4">
+          {display.location || "Location"}
+        </h2>
+        <div className="text-3xl lg:text-4xl font-bold">
+          {display.price || "£0"} {display.priceType && (
+            <span className="text-lg font-normal">{display.priceType}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Property Features Icons */}
+      {(display.bedrooms || display.bathrooms || display.livingroom || display.garage) && (
+        <div className="flex items-center gap-6 mb-6">
+          {display.bedrooms && (
+            <div className="flex items-center gap-2">
+              <CustomIcon type="bedroom" size={24} className="text-white" />
+              <span className="text-lg font-semibold">{display.bedrooms}</span>
+            </div>
+          )}
+          {display.bathrooms && (
+            <div className="flex items-center gap-2">
+              <CustomIcon type="bathroom" size={24} className="text-white" />
+              <span className="text-lg font-semibold">{display.bathrooms}</span>
+            </div>
+          )}
+          {display.livingroom && (
+            <div className="flex items-center gap-2">
+              <CustomIcon type="livingroom" size={24} className="text-white" />
+              <span className="text-lg font-semibold">{display.livingroom}</span>
+            </div>
+          )}
+          {display.garage && (
+            <div className="flex items-center gap-2">
+              <CustomIcon type="garage" size={24} className="text-white" />
+              <span className="text-lg font-semibold">{display.garage}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Property Description */}
+      {display.description && (
+        <div className="mb-6">
+          <p className="text-sm leading-relaxed opacity-90">
+            {display.description}
+          </p>
+        </div>
+      )}
+
+      {/* Key Features */}
+      {features.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide">Key Features</h3>
+          <ul className="space-y-1">
+            {features.map((feature, index) => (
+              <li key={index} className="text-sm opacity-90">
+                • {feature.trim()}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Contact Information */}
+      <div className="border-t border-white/20 pt-4 mb-6">
+        {display.contactNumber && (
+          <div className="text-sm mb-2">
+            <span className="font-semibold">Phone:</span> {display.contactNumber}
+          </div>
+        )}
+        {display.email && (
+          <div className="text-sm mb-4">
+            <span className="font-semibold">Email:</span> {display.email}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Section - QR Code and Company Logo */}
+      <div className="mt-auto">
+        {(() => {
+          const showQrCode = display.showQrCode && display.qrCodePath;
+          const showCompanyLogo = display.showCompanyLogo && display.companyLogoPath;
+          
+          if (!showQrCode && !showCompanyLogo) return null;
+          
+          // If only one item is enabled, center it
+          if (showQrCode && !showCompanyLogo) {
+            return (
+              <div className="text-center">
+                <h3 className="text-sm font-semibold mb-3 opacity-90">Scan for more information</h3>
+                <div className="w-24 h-24 relative bg-white rounded-lg shadow-lg p-2 mx-auto">
+                  <PropertyImage 
+                    src={`uploads/${id}/${display.qrCodePath}`}
+                    alt="QR Code"
+                    fallbackText="QR Code"
+                    fill={true}
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+            );
+          }
+          
+          if (!showQrCode && showCompanyLogo) {
+            return (
+              <div className="text-center py-4 px-4">
+                <div className="w-52 h-14 relative mx-auto">
+                  <PropertyImage 
+                    src={`uploads/${id}/${display.companyLogoPath}`}
+                    alt="Company Logo"
+                    fallbackText="Logo"
+                    fill={true}
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+            );
+          }
+          
+          // If both are enabled, show them side by side
+          return (
+            <div className="flex items-end justify-center gap-4">
+              <div className="text-center">
+                <h3 className="text-sm font-semibold mb-3 opacity-90">Scan for more information</h3>
+                <div className="w-20 h-20 relative bg-white rounded-lg shadow-lg p-2">
+                  <PropertyImage 
+                    src={`uploads/${id}/${display.qrCodePath}`}
+                    alt="QR Code"
+                    fallbackText="QR Code"
+                    fill={true}
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="w-52 h-14 relative">
+                  <PropertyImage 
+                    src={`uploads/${id}/${display.companyLogoPath}`}
+                    alt="Company Logo"
+                    fallbackText="Logo"
+                    fill={true}
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+    </div>
+  );
+
+  // Images content component
+  const ImagesContent = () => (
+    <div className="bg-gray-50 p-4 lg:p-6">
+      <div className="space-y-4 h-full">
+        
+        {/* Main Property Image with Carousel */}
+        <ImageCarousel
+          mainImage={display.mainImage}
+          image1={display.image1}
+          image2={display.image2}
+          image3={display.image3}
+          displayId={id}
+          enabled={display.carouselEnabled ?? false}
+          duration={display.carouselDuration ?? 5000}
+          transition={display.carouselTransition as 'none' | 'fade' ?? 'fade'}
+        />
+
+        {/* Three Interior Images in a Row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="aspect-square relative bg-gray-200 rounded-lg overflow-hidden">
+            <PropertyImage 
+              src={display.image1 ? `uploads/${id}/${display.image1}` : ''}
+              alt={`${display.address || 'Property'} - Interior 1`}
+              fallbackText="Interior 1"
+              fill={true}
+            />
+          </div>
+
+          <div className="aspect-square relative bg-gray-200 rounded-lg overflow-hidden">
+            <PropertyImage 
+              src={display.image2 ? `uploads/${id}/${display.image2}` : ''}
+              alt={`${display.address || 'Property'} - Interior 2`}
+              fallbackText="Interior 2"
+              fill={true}
+            />
+          </div>
+
+          <div className="aspect-square relative bg-gray-200 rounded-lg overflow-hidden">
+            <PropertyImage 
+              src={display.image3 ? `uploads/${id}/${display.image3}` : ''}
+              alt={`${display.address || 'Property'} - Interior 3`}
+              fallbackText="Interior 3"
+              fill={true}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white">
       {/* Main Display Container */}
       <div className="max-w-6xl mx-auto p-4">
-        <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
-            
-            {/* Left Sidebar - Property Info */}
-            <div 
-              className="text-white p-6 lg:p-8 flex flex-col"
-              style={{ 
-                background: `linear-gradient(to bottom, ${display.sidebarColor || '#7C3AED'}, ${adjustColor(display.sidebarColor || '#7C3AED', -20)})` 
-              }}
-            >
-              {/* Header Section */}
-              <div className="mb-6">
-                <h1 className="text-2xl lg:text-3xl font-bold mb-2">
-                  {display.address || "Property Address"}
-                </h1>
-                <h2 className="text-lg lg:text-xl font-semibold mb-4">
-                  {display.location || "Location"}
-                </h2>
-                <div className="text-3xl lg:text-4xl font-bold">
-                  {display.price || "£0"} {display.priceType && (
-                    <span className="text-lg font-normal">{display.priceType}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Property Features Icons */}
-              {(display.bedrooms || display.bathrooms || display.garage) && (
-                <div className="flex items-center gap-6 mb-6">
-                  {display.bedrooms && (
-                    <div className="flex items-center gap-2">
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
-                      </svg>
-                      <span className="text-lg font-semibold">{display.bedrooms}</span>
-                    </div>
-                  )}
-                  {display.bathrooms && (
-                    <div className="flex items-center gap-2">
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clipRule="evenodd"/>
-                      </svg>
-                      <span className="text-lg font-semibold">{display.bathrooms}</span>
-                    </div>
-                  )}
-                  {display.garage && (
-                    <div className="flex items-center gap-2">
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4v-5h12v5zm0-7H4V5h12v3z" clipRule="evenodd"/>
-                      </svg>
-                      <span className="text-lg font-semibold">{display.garage}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Property Description */}
-              {display.description && (
-                <div className="mb-6">
-                  <p className="text-sm leading-relaxed opacity-90">
-                    {display.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Key Features */}
-              {features.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold mb-3 uppercase tracking-wide">Key Features</h3>
-                  <ul className="space-y-1">
-                    {features.map((feature, index) => (
-                      <li key={index} className="text-sm opacity-90">
-                        • {feature.trim()}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Contact Information */}
-              <div className="border-t border-white/20 pt-4 mb-6">
-                {display.contactNumber && (
-                  <div className="text-sm mb-2">
-                    <span className="font-semibold">Phone:</span> {display.contactNumber}
-                  </div>
-                )}
-                {display.email && (
-                  <div className="text-sm mb-4">
-                    <span className="font-semibold">Email:</span> {display.email}
-                  </div>
-                )}
-              </div>
-
-              {/* QR Code Section */}
-              {display.qrCodePath && (
-                <div className="mt-auto">
-                  <div className="text-center">
-                    <h3 className="text-sm font-semibold mb-3 opacity-90">Scan for more information</h3>
-                    <div className="w-24 h-24 relative bg-white rounded-lg shadow-lg p-2 mx-auto">
-                      <PropertyImage 
-                        src={`uploads/${id}/${display.qrCodePath}`}
-                        alt="QR Code"
-                        fallbackText="QR Code"
-                        fill={true}
-                        className="object-contain"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right Side - Images */}
-            <div className="lg:col-span-2 bg-gray-50 p-4 lg:p-6">
-              <div className="space-y-4 h-full">
-                
-                {/* Main Property Image with Carousel */}
-                <ImageCarousel
-                  mainImage={display.mainImage}
-                  image1={display.image1}
-                  image2={display.image2}
-                  image3={display.image3}
-                  displayId={id}
-                  enabled={display.carouselEnabled ?? false}
-                  duration={display.carouselDuration ?? 5000}
-                  transition={display.carouselTransition as 'none' | 'fade' ?? 'fade'}
-                />
-
-                {/* Three Interior Images in a Row */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="aspect-square relative bg-gray-200 rounded-lg overflow-hidden">
-                    <PropertyImage 
-                      src={display.image1 ? `uploads/${id}/${display.image1}` : ''}
-                      alt={`${display.address || 'Property'} - Interior 1`}
-                      fallbackText="Interior 1"
-                      fill={true}
-                    />
-                  </div>
-
-                  <div className="aspect-square relative bg-gray-200 rounded-lg overflow-hidden">
-                    <PropertyImage 
-                      src={display.image2 ? `uploads/${id}/${display.image2}` : ''}
-                      alt={`${display.address || 'Property'} - Interior 2`}
-                      fallbackText="Interior 2"
-                      fill={true}
-                    />
-                  </div>
-
-                  <div className="aspect-square relative bg-gray-200 rounded-lg overflow-hidden">
-                    <PropertyImage 
-                      src={display.image3 ? `uploads/${id}/${display.image3}` : ''}
-                      alt={`${display.address || 'Property'} - Interior 3`}
-                      fallbackText="Interior 3"
-                      fill={true}
-                    />
-                  </div>
-                </div>
+        <div className="bg-white shadow-2xl rounded-lg overflow-hidden relative">
+          
+          {sidebarPosition === 'left' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+              <SidebarContent />
+              <div className="lg:col-span-2">
+                <ImagesContent />
               </div>
             </div>
-          </div>
+          )}
+          
+          {sidebarPosition === 'right' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+              <div className="lg:col-span-2">
+                <ImagesContent />
+              </div>
+              <SidebarContent />
+            </div>
+          )}
+          
+          {sidebarPosition === 'bottom' && (
+            <div className="flex flex-col">
+              <div className="flex-1">
+                <ImagesContent />
+              </div>
+              <div className="lg:h-64">
+                <SidebarContent />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

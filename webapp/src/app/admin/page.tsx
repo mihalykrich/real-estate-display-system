@@ -1,22 +1,41 @@
+"use client";
 import Link from "next/link";
-import { prisma } from '@/lib/prisma';
+import { useState, useEffect } from 'react';
+import { DisplayQuickViewModal } from '@/components/DisplayQuickViewModal';
 
-export default async function AdminPage() {
-  // Get actual display statistics
-  const totalDisplays = await prisma.display.count();
-  const activeDisplays = await prisma.display.count({
-    where: {
-      OR: [
-        { address: { not: null } },
-        { location: { not: null } },
-        { price: { not: null } },
-        { mainImage: { not: null } },
-        { image1: { not: null } },
-        { image2: { not: null } },
-        { image3: { not: null } }
-      ]
+export default function AdminPage() {
+  const [totalDisplays, setTotalDisplays] = useState(12);
+  const [activeDisplays, setActiveDisplays] = useState(12);
+  const [selectedDisplayId, setSelectedDisplayId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Fetch display statistics
+    fetchDisplayStats();
+  }, []);
+
+  const fetchDisplayStats = async () => {
+    try {
+      const response = await fetch('/api/admin/display-stats');
+      if (response.ok) {
+        const data = await response.json();
+        setTotalDisplays(data.totalDisplays);
+        setActiveDisplays(data.activeDisplays);
+      }
+    } catch (error) {
+      console.error('Error fetching display stats:', error);
     }
-  });
+  };
+
+  const handleQuickView = (displayId: number) => {
+    setSelectedDisplayId(displayId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedDisplayId(null);
+  };
   
   // Placeholder grid of 12 display links
   const items = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -113,6 +132,17 @@ export default async function AdminPage() {
                     >
                       Edit Content
                     </Link>
+                    <button
+                      onClick={() => handleQuickView(id)}
+                      className="w-full bg-green-100 hover:bg-green-200 text-green-700 text-sm font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                      title="Quick View"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Quick View
+                    </button>
                   </div>
                 </div>
               </div>
@@ -141,6 +171,15 @@ export default async function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      {selectedDisplayId && (
+        <DisplayQuickViewModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          displayId={selectedDisplayId}
+        />
+      )}
     </div>
   );
 }
