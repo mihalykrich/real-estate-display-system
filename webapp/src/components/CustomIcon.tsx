@@ -21,7 +21,25 @@ export function CustomIcon({ type, size = 24, className = '', fallback }: Custom
       setHasError(false);
       
       try {
-        // First, try to get available icons from the API
+        // First, try to get the selected icon preference
+        const prefsResponse = await fetch('/api/admin/icon-preferences');
+        if (prefsResponse.ok) {
+          const prefsData = await prefsResponse.json();
+          const selectedIcon = prefsData.preferences?.[type];
+          
+          if (selectedIcon) {
+            // Use the selected icon
+            setIconPath(`/icons/${type}/${selectedIcon}`);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('Preferences not available, trying API');
+      }
+
+      try {
+        // If no preference, try to get available icons from the API
         const response = await fetch(`/api/icons/${type}`);
         if (response.ok) {
           const data = await response.json();
@@ -99,6 +117,7 @@ export function CustomIcon({ type, size = 24, className = '', fallback }: Custom
       height={size}
       className={className}
       style={{ width: size, height: size }}
+      unoptimized={true}
     />
   );
 }
