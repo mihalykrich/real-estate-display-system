@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -14,36 +8,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth core models (compatible with Credentials + OAuth providers)
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  // Optional for credentials auth
   passwordHash  String?
-  // User role for admin management
-  role          String    @default("user") // "user" or "admin"
-  
-  // Profile Settings
-  companyName   String?   // Company/Organization name
-  companyLogo   String?   // Path to uploaded logo file
-  phoneNumber   String?   // Contact phone number
-  bio           String?   @db.Text // User bio/description
-  website       String?   // Personal/company website
-  timezone      String?   @default("Europe/London") // User timezone
-  language      String?   @default("en") // Preferred language
-
-  accounts      Account[]
-  sessions      Session[]
-
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  bio           String?
+  companyLogo   String?
+  companyName   String?
+  language      String?   @default("en")
+  phoneNumber   String?
+  role          String    @default("user")
+  timezone      String?   @default("Europe/London")
+  website       String?
+  accounts      Account[]
+  sessions      Session[]
 }
 
 model Account {
-  id                String   @id @default(cuid())
+  id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -55,8 +42,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -66,121 +52,80 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Displays for Raspberry Pi signage
 model Display {
-  id             Int       @id @default(autoincrement())
-  
-  // Property Details
-  address        String?
-  location       String?
-  price          String?
-  priceType      String?   // "PCM", "Sale", etc.
-  
-  // Property Features
-  bedrooms       Int?
-  bathrooms      Int?
-  garage         Int?
-  livingroom     Int?
-  propertyType   String?   // "House", "Apartment", "Cottage", etc.
-  
-  // Content
-  description    String?   @db.Text
-  features       String?   @db.Text // JSON array of features
-  
-  // Images
-  mainImage      String?
-  image1         String?
-  image2         String?
-  image3         String?
-  
-  // Contact & QR
-  qrCodePath     String?
-  showQrCode     Boolean? @default(false)    // Show/hide QR code
-  contactNumber  String?
-  email          String?
-  
-  // Display Styling
-  sidebarColor   String?   @default("#7C3AED") // Default purple
-  sidebarPosition String?  @default("left")    // "left", "right", or "bottom"
-  
-  // Company Logo Display
-  showCompanyLogo Boolean? @default(false)    // Show/hide company logo
-  companyLogoPath String?                      // Path to company logo file
-  
-  // Image Carousel Configuration
-  carouselEnabled Boolean? @default(false)     // Enable/disable carousel
-  carouselDuration Int?    @default(5000)      // Time per image in milliseconds
-  carouselTransition String? @default("fade")  // Transition type: "none" or "fade"
-
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  
-  // Relations
-  scheduledDisplays ScheduledDisplay[]
+  id                 Int                @id @default(autoincrement())
+  mainImage          String?
+  image1             String?
+  image2             String?
+  qrCodePath         String?
+  contactNumber      String?
+  email              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  address            String?
+  bathrooms          Int?
+  bedrooms           Int?
+  carouselDuration   Int?               @default(5000)
+  carouselEnabled    Boolean?           @default(false)
+  carouselTransition String?            @default("fade")
+  companyLogoPath    String?
+  description        String?
+  features           String?
+  garage             Int?
+  image3             String?
+  location           String?
+  price              String?
+  priceType          String?
+  propertyType       String?
+  showCompanyLogo    Boolean?           @default(false)
+  sidebarColor       String?            @default("#7C3AED")
+  sidebarPosition    String?            @default("left")
+  livingroom         Int?
+  showQrCode         Boolean?           @default(false)
+  scheduledDisplays  ScheduledDisplay[]
 }
 
-// Scheduled Displays for automated content updates
 model ScheduledDisplay {
-  id             Int       @id @default(autoincrement())
-  
-  // Scheduling
-  name           String    // Display name/title
-  description    String?   @db.Text // Description of this scheduled content
-  startDate      DateTime  // When this schedule should start
-  endDate        DateTime? // When this schedule should end (null = indefinite)
-  isActive       Boolean   @default(true) // Enable/disable this schedule
-  
-  // Target Display
-  targetDisplayId Int     // Which display this schedule applies to
-  targetDisplay   Display @relation(fields: [targetDisplayId], references: [id], onDelete: Cascade)
-  
-  // Schedule Pattern
-  scheduleType   String    @default("once") // "once", "daily", "weekly", "monthly"
-  scheduleTime   String?   // Time of day (HH:MM format) for recurring schedules
-  scheduleDays   String?   // Comma-separated days for weekly schedules (0=Sunday, 1=Monday, etc.)
-  scheduleDate   Int?      // Day of month for monthly schedules
-  
-  // Content Data (JSON)
-  contentData    String    @db.Text // JSON string containing all display data
-  
-  // Status
-  lastExecuted   DateTime? // When this schedule was last executed
-  executionCount Int       @default(0) // How many times this has been executed
-  nextExecution  DateTime? // When this schedule should next execute
-  
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  
-  // Relations
-  images         ScheduledImage[]
-  
+  id              Int              @id @default(autoincrement())
+  name            String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean          @default(true)
+  targetDisplayId Int
+  scheduleType    String           @default("once")
+  scheduleTime    String?
+  scheduleDays    String?
+  scheduleDate    Int?
+  contentData     String
+  lastExecuted    DateTime?
+  executionCount  Int              @default(0)
+  nextExecution   DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  targetDisplay   Display          @relation(fields: [targetDisplayId], references: [id], onDelete: Cascade)
+  images          ScheduledImage[]
+
   @@index([targetDisplayId])
   @@index([startDate])
   @@index([isActive])
 }
 
-// Scheduled Images for scheduled displays
 model ScheduledImage {
-  id               Int       @id @default(autoincrement())
-  
-  // Reference to scheduled display
+  id                 Int              @id @default(autoincrement())
   scheduledDisplayId Int
+  imageType          String
+  fileName           String
+  filePath           String
+  fileSize           Int?
+  mimeType           String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
   scheduledDisplay   ScheduledDisplay @relation(fields: [scheduledDisplayId], references: [id], onDelete: Cascade)
-  
-  // Image details
-  imageType        String    // "mainImage", "image1", "image2", "image3", "qrCode", "companyLogo"
-  fileName         String    // Original filename
-  filePath         String    // Path to uploaded file
-  fileSize         Int?      // File size in bytes
-  mimeType         String?   // MIME type of the file
-  
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  
+
   @@index([scheduledDisplayId])
   @@index([imageType])
 }
