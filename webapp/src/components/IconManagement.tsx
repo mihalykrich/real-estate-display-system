@@ -228,8 +228,8 @@ export function IconManagement() {
                         />
                         <div className={`w-10 h-10 relative rounded-lg flex items-center justify-center flex-shrink-0 ${
                           selectedIcons[type] === icon.name 
-                            ? 'border-2 border-blue-400 bg-blue-25' 
-                            : 'border border-gray-200 bg-white'
+                            ? 'border-2 border-blue-400 bg-gray-100' 
+                            : 'border border-gray-200 bg-gray-100'
                         }`}>
                           <Image
                             src={icon.path}
